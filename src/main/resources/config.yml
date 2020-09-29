@@ -1,0 +1,30 @@
+jdbc:
+  enable: true
+  driver: com.taosdata.jdbc.TSDBDriver
+  url: "jdbc:TAOS://localhost:6030/?timezone=Asia/Chongqing"
+  username: root
+  password: taosdata
+  database: mqtt
+  table: 'mqtt_payload'
+  pool:
+    # maximum number of connection in the pool
+    maxActive: 10
+    # initial number of connection
+    initialSize: 3
+    # maximum wait milliseconds for get connection from pool
+    maxWait: 10000
+    # minimum number of connection in the pool
+    minIdle: 3
+    validationQuery: 'select server_status();'
+
+rest:
+  enable: false
+  url: 'http://localhost:6041/rest/sql'
+  database: database
+  username: username
+  password: password
+
+
+
+
+

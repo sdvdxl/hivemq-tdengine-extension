@@ -1,0 +1,21 @@
+:hivemq-link: http://www.hivemq.com
+:hivemq-extension-docs-link: http://www.hivemq.com/docs/extensions/latest/
+:hivemq-extension-docs-archetype-link: https://www.hivemq.com/docs/extensions/latest/#maven-archetype-chapter
+:hivemq-blog-tools: http://www.hivemq.com/mqtt-toolbox
+:maven-documentation-profile-link: http://maven.apache.org/guides/introduction/introduction-to-profiles.html
+:hivemq-support: http://www.hivemq.com/support/
+:hivemq-testcontainer: https://github.com/hivemq/hivemq-testcontainer
+:hivemq-mqtt-client: https://github.com/hivemq/hivemq-mqtt-client
+:td-engine: https://www.taosdata.com/
+
+= HiveMQ 4 TDengine Extension
+
+*Version*: 1.0.0
+
+*License*: Apache License Version 2.0
+
+== 功能
+
+- 支持使用jdbc方式将 mqtt 消息写入 TDengine
+- 支持使用http RESTful 方式将 mqtt 消息写入 TDengine
+

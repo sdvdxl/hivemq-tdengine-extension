@@ -1,0 +1,9 @@
+/target/
+/.idea/libraries/
+/.idea/cssxfire.xml
+/.idea/workspace.xml
+.DS_Store
+/.idea/
+/hivemq-tdengine-extension.iml
+README.pdf
+README.html
