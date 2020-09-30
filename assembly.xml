@@ -28,12 +28,7 @@
             <outputDirectory>/${artifactId}/</outputDirectory>
         </file>
         <file>
-            <source>target/README.html</source>
-            <outputDirectory>/${artifactId}/</outputDirectory>
-        </file>
-        <file>
-            <source>README.adoc</source>
-            <destName>README.txt</destName>
+            <source>README.md</source>
             <outputDirectory>/${artifactId}/</outputDirectory>
         </file>
         <file>
