@@ -21,9 +21,12 @@ import com.hivemq.extension.sdk.api.interceptor.publish.PublishInboundIntercepto
 import com.hivemq.extension.sdk.api.interceptor.publish.parameter.PublishInboundInput;
 import com.hivemq.extension.sdk.api.interceptor.publish.parameter.PublishInboundOutput;
 import com.hivemq.extension.sdk.api.packets.publish.ModifiablePublishPacket;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import top.todu.hivemq.extensions.tdengine.service.MqttPayloadService;
+import top.todu.hivemq.extensions.tdengine.util.ThreadPoolUtil;
 
 /**
  * @author sdvdxl
@@ -33,6 +36,14 @@ public class TdEngineMessageInBoundInterceptor implements PublishInboundIntercep
 
   private static final Logger log =
       LoggerFactory.getLogger(TdEngineMessageInBoundInterceptor.class);
+  private static final ThreadPoolExecutor EXECUTOR =
+      new ThreadPoolUtil.Builder()
+          .setCore(Runtime.getRuntime().availableProcessors())
+          .setMax(Runtime.getRuntime().availableProcessors() * 2)
+          .setPrefix("hivemq-tdengine-")
+          .setKeepAliveTime(TimeUnit.MINUTES.toMillis(1))
+          .setQueueSize(1000)
+          .build();
   private final MqttPayloadService mqttPayloadService;
 
   public TdEngineMessageInBoundInterceptor(MqttPayloadService mqttPayloadService) {
@@ -45,19 +56,25 @@ public class TdEngineMessageInBoundInterceptor implements PublishInboundIntercep
       final @NotNull PublishInboundInput publishInboundInput,
       final @NotNull PublishInboundOutput publishInboundOutput) {
     final ModifiablePublishPacket publishPacket = publishInboundOutput.getPublishPacket();
-    publishPacket
-        .getPayload()
-        .ifPresent(
-            b -> {
-              byte[] buf = new byte[b.limit()];
-              b.get(buf);
-              mqttPayloadService.save(
-                  publishInboundInput.getClientInformation().getClientId(),
-                  publishPacket.getTopic(),
-                  publishPacket.getQos(),
-                  publishInboundInput.getConnectionInformation().getInetAddress().orElseGet(null),
-                  publishPacket.getTimestamp(),
-                  buf);
-            });
+    EXECUTOR.execute(
+        () -> {
+          publishPacket
+              .getPayload()
+              .ifPresent(
+                  b -> {
+                    byte[] buf = new byte[b.limit()];
+                    b.get(buf);
+                    mqttPayloadService.save(
+                        publishInboundInput.getClientInformation().getClientId(),
+                        publishPacket.getTopic(),
+                        publishPacket.getQos(),
+                        publishInboundInput
+                            .getConnectionInformation()
+                            .getInetAddress()
+                            .orElseGet(null),
+                        publishPacket.getTimestamp(),
+                        buf);
+                  });
+        });
   }
 }

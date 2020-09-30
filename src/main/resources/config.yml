@@ -20,9 +20,10 @@ jdbc:
 rest:
   enable: false
   url: 'http://localhost:6041/rest/sql'
-  database: database
-  username: username
-  password: password
+  database: mqtt
+  table: mqtt_payload_http
+  username: root
+  password: taosdata
 
 
 

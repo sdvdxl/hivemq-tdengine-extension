@@ -11,6 +11,7 @@ import top.todu.hivemq.extensions.tdengine.config.TdEngineConfig;
 import top.todu.hivemq.extensions.tdengine.dao.JdbcDao;
 import top.todu.hivemq.extensions.tdengine.dao.RestDao;
 import top.todu.hivemq.extensions.tdengine.dao.TdEngineDao;
+import top.todu.hivemq.extensions.tdengine.util.ThreadPoolUtil;
 
 /**
  * mqtt pay load service <br>
@@ -29,7 +30,7 @@ public class MqttPayloadService {
     if (config.isJdbcEnable()) {
       try {
         register(new JdbcDao(this.config.getJdbc()));
-      } catch (Exception e) {
+      } catch (Throwable e) {
         log.error(e.getMessage(), e);
       }
     }
@@ -37,7 +38,7 @@ public class MqttPayloadService {
     if (config.isRestEnable()) {
       try {
         register(new RestDao(this.config.getRest()));
-      } catch (Exception e) {
+      } catch (Throwable e) {
         log.error(e.getMessage(), e);
       }
     }
@@ -74,7 +75,13 @@ public class MqttPayloadService {
   }
 
   public void close() {
-    daoList.parallelStream().forEach(TdEngineDao::close);
+    try {
+      daoList.parallelStream().forEach(TdEngineDao::close);
+    } catch (Exception e) {
+      log.error(e.getMessage(), e);
+    }
+
+    ThreadPoolUtil.close();
   }
 
   public void save(

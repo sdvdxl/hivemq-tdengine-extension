@@ -11,8 +11,26 @@ public class RestConfig {
 
   private boolean enable;
   private String url;
+  private String database;
+  private String table;
   private String username;
   private String password;
+
+  public String getDatabase() {
+    return database;
+  }
+
+  public void setDatabase(String database) {
+    this.database = database;
+  }
+
+  public String getTable() {
+    return table;
+  }
+
+  public void setTable(String table) {
+    this.table = table;
+  }
 
   @Override
   public String toString() {

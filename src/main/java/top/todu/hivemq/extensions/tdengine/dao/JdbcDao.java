@@ -34,8 +34,8 @@ import top.todu.hivemq.extensions.tdengine.config.JdbcConfig;
  */
 public class JdbcDao implements TdEngineDao {
   private static final Logger log = LoggerFactory.getLogger(JdbcDao.class);
-  private static final String SQL_CREATE_DB = "create database if not exists %s ;";
-  private static final String SQL_CREATE_TABLE =
+  public static final String SQL_CREATE_DB = "create database if not exists %s ;";
+  public static final String SQL_CREATE_TABLE =
       "create table if not exists %s.%s(ts timestamp, client_id nchar(1024), topic nchar(1024), qos tinyint, ip nchar(512), payload nchar(1024) );";
   private static final String SQL_INSERT =
       "insert into %s.%s(ts, client_id, topic, qos, ip, payload) values(?, ?, ?, ?, ?, ?)";

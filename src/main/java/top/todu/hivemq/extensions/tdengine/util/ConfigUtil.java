@@ -20,7 +20,9 @@ public class ConfigUtil {
 
   static {
     objectMapper = new ObjectMapper(new YAMLFactory());
-    objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    objectMapper
+        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+        .configure(DeserializationFeature.FAIL_ON_TRAILING_TOKENS, true);
   }
 
   public static TdEngineConfig parseFromFile(String configFilePath) {
