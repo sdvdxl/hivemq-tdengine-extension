@@ -13,14 +13,14 @@ import static com.alibaba.druid.pool.DruidDataSourceFactory.PROP_TESTWHILEIDLE;
 import static com.alibaba.druid.pool.DruidDataSourceFactory.PROP_TIMEBETWEENEVICTIONRUNSMILLIS;
 import static com.alibaba.druid.pool.DruidDataSourceFactory.PROP_URL;
 import static com.alibaba.druid.pool.DruidDataSourceFactory.PROP_USERNAME;
+import static top.todu.hivemq.extensions.tdengine.util.SqlUtil.buildInsertSql;
 
+import coder.PayloadCoder;
 import com.alibaba.druid.pool.DruidDataSource;
 import com.alibaba.druid.pool.DruidDataSourceFactory;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.sql.Timestamp;
 import java.util.Properties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,17 +33,24 @@ import top.todu.hivemq.extensions.tdengine.config.JdbcConfig;
  * @date 2020/9/29 14:33 <br>
  */
 public class JdbcDao implements TdEngineDao {
-  private static final Logger log = LoggerFactory.getLogger(JdbcDao.class);
   public static final String SQL_CREATE_DB = "create database if not exists %s ;";
   public static final String SQL_CREATE_TABLE =
       "create table if not exists %s.%s(ts timestamp, client_id nchar(1024), topic nchar(1024), qos tinyint, ip nchar(512), payload nchar(1024) );";
+  private static final Logger log = LoggerFactory.getLogger(JdbcDao.class);
   private static final String SQL_INSERT =
       "insert into %s.%s(ts, client_id, topic, qos, ip, payload) values(?, ?, ?, ?, ?, ?)";
   private final JdbcConfig config;
+  private final PayloadCoder payloadCoder;
   private DruidDataSource dataSource;
 
   public JdbcDao(JdbcConfig config) {
     this.config = config;
+    this.payloadCoder = config.getPayloadCoder();
+  }
+
+  @Override
+  public String getPayloadCoder() {
+    return payloadCoder.name();
   }
 
   @Override
@@ -87,18 +94,33 @@ public class JdbcDao implements TdEngineDao {
 
   @Override
   public void save(
-      String clientId, String topic, int qos, String ip, long timestamp, String payload) {
+      String clientId, String topic, int qos, String ip, long timestamp, byte[] payload) {
+    // todo 这个地方taos驱动 PreparedStatement有个bug，如果设置的字符串含有单引号（'）就会插入失败，也不会报错,
+    // 所以这里先用statement拼接方式
+
     try (Connection conn = dataSource.getConnection()) {
-      try (PreparedStatement pstmt =
-          conn.prepareStatement(
-              String.format(SQL_INSERT, config.getDatabase(), config.getTable()))) {
-        pstmt.setTimestamp(1, new Timestamp(timestamp));
-        pstmt.setString(2, clientId);
-        pstmt.setString(3, topic);
-        pstmt.setInt(4, qos);
-        pstmt.setString(5, ip);
-        pstmt.setString(6, payload);
-        int count = pstmt.executeUpdate();
+
+      try (Statement stmt = conn.createStatement()) {
+        String sql =
+            buildInsertSql(
+                config.getDatabase(),
+                config.getTable(),
+                clientId,
+                topic,
+                qos,
+                ip,
+                timestamp,
+                payload,
+                payloadCoder);
+        int count = stmt.executeUpdate(sql);
+
+        if (log.isDebugEnabled()) {
+          log.debug("jdbc build sql:{}", sql);
+        }
+        if (count == 0) {
+          log.error("use jdbc insert to tdengine failed, data:{}", payloadCoder.encode(payload));
+          return;
+        }
         if (log.isDebugEnabled()) {
           log.debug("jdbc save to tdengine, count: {}", count);
         }

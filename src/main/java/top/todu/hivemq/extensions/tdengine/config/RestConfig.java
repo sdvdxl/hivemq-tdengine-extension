@@ -1,5 +1,7 @@
 package top.todu.hivemq.extensions.tdengine.config;
 
+import coder.PayloadCoder;
+
 /**
  * rest config <br>
  *
@@ -15,6 +17,15 @@ public class RestConfig {
   private String table;
   private String username;
   private String password;
+  private PayloadCoder payloadCoder;
+
+  public PayloadCoder getPayloadCoder() {
+    return payloadCoder;
+  }
+
+  public void setPayloadCoder(PayloadCoder payloadCoder) {
+    this.payloadCoder = payloadCoder;
+  }
 
   public String getDatabase() {
     return database;

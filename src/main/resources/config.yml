@@ -6,6 +6,8 @@ jdbc:
   password: taosdata
   database: mqtt
   table: 'mqtt_payload'
+  # RAW origin ; BASE64 base64 encoded;
+  payloadEncoder: BASE64
   pool:
     # maximum number of connection in the pool
     maxActive: 10
@@ -24,8 +26,5 @@ rest:
   table: mqtt_payload_http
   username: root
   password: taosdata
-
-
-
-
-
+  # RAW origin ; BASE64 base64 encoded;
+  payloadCoder: RAW

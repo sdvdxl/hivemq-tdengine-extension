@@ -1,5 +1,7 @@
 package top.todu.hivemq.extensions.tdengine.config;
 
+import coder.PayloadCoder;
+
 /**
  * jdbc config <br>
  *
@@ -23,6 +25,15 @@ public class JdbcConfig {
   private String password;
   private String table;
   private String database;
+  private PayloadCoder payloadCoder;
+
+  public PayloadCoder getPayloadCoder() {
+    return payloadCoder;
+  }
+
+  public void setPayloadCoder(PayloadCoder payloadCoder) {
+    this.payloadCoder = payloadCoder;
+  }
 
   public String getTable() {
     return table;

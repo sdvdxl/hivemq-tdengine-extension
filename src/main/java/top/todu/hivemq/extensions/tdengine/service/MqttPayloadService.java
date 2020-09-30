@@ -2,7 +2,6 @@ package top.todu.hivemq.extensions.tdengine.service;
 
 import com.hivemq.extension.sdk.api.packets.general.Qos;
 import java.net.InetAddress;
-import java.util.Base64;
 import java.util.concurrent.CopyOnWriteArrayList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,7 +56,8 @@ public class MqttPayloadService {
 
     dao.init();
     daoList.add(dao);
-    log.info("dao of class {} register success", dao.getClass());
+    log.info(
+        "dao of class {} register success, use coder: {}", dao.getClass(), dao.getPayloadCoder());
   }
 
   /**
@@ -80,7 +80,7 @@ public class MqttPayloadService {
     } catch (Exception e) {
       log.error(e.getMessage(), e);
     }
-
+    daoList.clear();
     ThreadPoolUtil.close();
   }
 
@@ -109,6 +109,6 @@ public class MqttPayloadService {
         qos.getQosNumber(),
         inetAddress == null ? "" : inetAddress.getHostAddress(),
         timestamp,
-        Base64.getEncoder().encodeToString(payload));
+        payload);
   }
 }

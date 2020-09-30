@@ -6,6 +6,8 @@ package top.todu.hivemq.extensions.tdengine.dao;
  */
 public interface TdEngineDao {
 
+  String getPayloadCoder();
+
   /** init */
   void init();
 
@@ -18,7 +20,7 @@ public interface TdEngineDao {
    * @param timestamp
    * @param payload
    */
-  void save(String clientId, String topic, int qos, String ip, long timestamp, String payload);
+  void save(String clientId, String topic, int qos, String ip, long timestamp, byte[] payload);
 
   void close();
 }

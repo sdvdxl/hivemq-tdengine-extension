@@ -1,11 +1,11 @@
 package top.todu.hivemq.extensions.tdengine.dao;
 
-import static com.fasterxml.jackson.databind.util.StdDateFormat.DATE_FORMAT_STR_ISO8601;
+import static top.todu.hivemq.extensions.tdengine.util.SqlUtil.buildInsertSql;
 
+import coder.PayloadCoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
-import java.util.TimeZone;
-import org.apache.commons.lang3.time.FastDateFormat;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import top.todu.hivemq.extensions.tdengine.config.RestConfig;
@@ -19,18 +19,18 @@ import top.todu.hivemq.extensions.tdengine.util.HttpUtil;
  */
 public class RestDao implements TdEngineDao {
   private static final Logger log = LoggerFactory.getLogger(RestDao.class);
-  private final FastDateFormat DATE_FORMAT;
   private final RestConfig config;
+  private final PayloadCoder payloadCoder;
   private HttpUtil httpUtil;
 
   public RestDao(RestConfig config) {
     this.config = config;
-    DATE_FORMAT =
-        FastDateFormat.getInstance(DATE_FORMAT_STR_ISO8601, TimeZone.getTimeZone("GMT+8"));
+    this.payloadCoder = config.getPayloadCoder();
   }
 
-  private static String escape(String content) {
-    return content.replace("'", "\\'");
+  @Override
+  public String getPayloadCoder() {
+    return payloadCoder.name();
   }
 
   @Override
@@ -68,33 +68,26 @@ public class RestDao implements TdEngineDao {
 
   @Override
   public void save(
-      String clientId, String topic, int qos, String ip, long timestamp, String payload) {
-    StringBuilder sqlBuilder =
-        new StringBuilder("insert into ")
-            .append(config.getDatabase())
-            .append(".")
-            .append(config.getTable())
-            .append(" values ('")
-            .append(DATE_FORMAT.format(timestamp))
-            .append("', '")
-            .append(escape(clientId))
-            .append("', '")
-            .append(escape(topic))
-            .append("', ")
-            .append(qos)
-            .append(", '")
-            .append(ip)
-            .append("', '")
-            .append(escape(payload))
-            .append("');");
-
+      String clientId, String topic, int qos, String ip, long timestamp, byte[] payload) {
+    String sql =
+        buildInsertSql(
+            config.getDatabase(),
+            config.getTable(),
+            clientId,
+            topic,
+            qos,
+            ip,
+            timestamp,
+            payload,
+            config.getPayloadCoder());
     if (log.isDebugEnabled()) {
-      log.debug("rest dao save sql:{}", sqlBuilder.toString());
+      log.debug("rest build sql:{}", sql);
     }
 
-    httpUtil.post(sqlBuilder.toString());
+    httpUtil.post(sql);
   }
 
+  @NotNull
   @Override
   public void close() {
     httpUtil.close();
