@@ -24,7 +24,7 @@
     </formats>
     <files>
         <file>
-            <source>target/LICENSE.txt</source>
+            <source>LICENSE.txt</source>
             <outputDirectory>/${artifactId}/</outputDirectory>
         </file>
         <file>
