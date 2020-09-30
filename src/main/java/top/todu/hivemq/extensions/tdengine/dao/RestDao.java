@@ -51,11 +51,19 @@ public class RestDao implements TdEngineDao {
   }
 
   private void createDB() {
-    httpUtil.post(String.format(JdbcDao.SQL_CREATE_DB, config.getDatabase()));
+    boolean success = httpUtil.post(String.format(JdbcDao.SQL_CREATE_DB, config.getDatabase()));
+    if (success) {
+      log.info("created db: {}", config.getDatabase());
+    }
   }
 
   private void createTable() {
-    httpUtil.post(String.format(JdbcDao.SQL_CREATE_TABLE, config.getDatabase(), config.getTable()));
+    boolean success =
+        httpUtil.post(
+            String.format(JdbcDao.SQL_CREATE_TABLE, config.getDatabase(), config.getTable()));
+    if (success) {
+      log.info("created table: {}.{}", config.getDatabase(), config.getTable());
+    }
   }
 
   @Override

@@ -73,7 +73,7 @@ public class HttpUtil {
     okHttpClient = null;
   }
 
-  public void post(String sql) {
+  public boolean post(String sql) {
     Request request =
         new Request.Builder()
             .url(url)
@@ -84,19 +84,24 @@ public class HttpUtil {
             .build();
 
     try (Response response = this.okHttpClient.newCall(request).execute()) {
-      String msg = new String(response.body().bytes());
+      byte[] bytes = response.body().bytes();
 
       if (!HttpUtil.is2xx(response.code())) {
-        throw new IllegalArgumentException(response.message() + ", " + msg + ", url:" + url);
+        String msg = new String(bytes);
+        log.error("execute sql error, sql:{}, error:{}", sql, msg);
+        return false;
       }
 
-      TdEngineHttpResponse resp =
-          JsonUtil.fromBytes(response.body().bytes(), TdEngineHttpResponse.class);
+      TdEngineHttpResponse resp = JsonUtil.fromBytes(bytes, TdEngineHttpResponse.class);
       if (!resp.isSuccess()) {
+        String msg = new String(bytes);
         log.error("execute sql error, sql:{}, error:{}", sql, msg);
+        return false;
       }
+      return true;
     } catch (Exception e) {
-      throw new RuntimeException(e);
+      log.error("execute sql error, sql:" + sql + ", error:" + e.getMessage(), e);
+      return false;
     }
   }
 }
