@@ -2,6 +2,8 @@ package coder;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import org.apache.commons.codec.DecoderException;
+import org.apache.commons.codec.binary.Hex;
 
 /**
  * PayloadCodecType <br>
@@ -34,7 +36,21 @@ public enum PayloadCoder {
       return encodedPayload == null ? null : Base64.getDecoder().decode(encodedPayload);
     }
   },
-  ;
+  HEX {
+    @Override
+    public String encode(byte[] payload) {
+      return Hex.encodeHexString(payload);
+    }
+
+    @Override
+    public byte[] decode(String encodedPayload) {
+      try {
+        return Hex.decodeHex(encodedPayload);
+      } catch (DecoderException e) {
+        throw new RuntimeException(e);
+      }
+    }
+  };
 
   /**
    * encode the payload
