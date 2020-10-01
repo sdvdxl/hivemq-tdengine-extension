@@ -32,12 +32,22 @@
 1. 将该文件夹拷到到 HiveMQ安装目录的 `extensions` 目录，正常的情况下应该看到HiveMQ的日志中有输出 `Extension "TD Engine Data Transfer" version 1.0.0 started successfully.` ，说明启动成功
 1. 如果要停止插件运行，在该插件文件夹创建一个名字为 `DISABLED` 的空文件即可；如果需要启用插件，删除 `DISABLED` 文件夹即可
 
+## 架构
+
+### 整体架构图 
+
+![架构图](https://public-links.todu.top/hivemq-tdengine-extension.jpg?imageMogr2/thumbnail/!100p)
+
+### 时序图
+
+![时序图](https://public-links.todu.top/hivemq-tdengine-extension-seq.jpg?imageMogr2/thumbnail/!100p)
+
 ## TODO
 
 - [ ] 支持热加载配置文件
 - [ ] 优化配置文件参数校验
   
-## 不足
+## 注意事项
 
 1. jdbc方式不支持hivemq 重新热加载插件（动态库重复问题），如果启用了jdbc方式并且更改了配置或者插件版本，需要重启hivemq server
 1. 根据测试，jdbc驱动版本 2.0.4 操作 server 2.0.0.0 会报错，所以驱动需要根据server版本选择
