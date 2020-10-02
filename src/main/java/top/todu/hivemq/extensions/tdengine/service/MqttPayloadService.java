@@ -24,30 +24,34 @@ import top.todu.hivemq.extensions.tdengine.util.ThreadPoolUtil;
  */
 public class MqttPayloadService {
   private static final Logger log = LoggerFactory.getLogger(MqttPayloadService.class);
-  private static final ThreadPoolExecutor EXECUTOR =
-      new ThreadPoolUtil.Builder()
-          .setCore(Runtime.getRuntime().availableProcessors())
-          .setMax(Runtime.getRuntime().availableProcessors() * 8)
-          .setUncaughtExceptionHandler(
-              new UncaughtExceptionHandler() {
-                @Override
-                public void uncaughtException(Thread t, Throwable e) {
-                  if (e instanceof RejectedExecutionException) {
-                    log.warn("save mqtt payload queue full, reject, queue info:{}", EXECUTOR);
-                  } else {
-                    log.error(e.getMessage(), e);
-                  }
-                }
-              })
-          .setPrefix("hivemq-tdengine-")
-          .setKeepAliveTime(TimeUnit.MINUTES.toMillis(1))
-          .setQueueSize(1000)
-          .build();
+  private final ThreadPoolExecutor threadPoolExecutor;
   private final TdEngineConfig config;
   private final CopyOnWriteArrayList<TdEngineDao> daoList = new CopyOnWriteArrayList<>();
 
   public MqttPayloadService(TdEngineConfig config) {
     this.config = config;
+    threadPoolExecutor =
+        new ThreadPoolUtil.Builder()
+            .setCore(config.getThreadPool().getCore())
+            .setMax(config.getThreadPool().getMax())
+            .setUncaughtExceptionHandler(
+                new UncaughtExceptionHandler() {
+                  @Override
+                  public void uncaughtException(Thread t, Throwable e) {
+                    if (e instanceof RejectedExecutionException) {
+                      log.warn(
+                          "save mqtt payload queue full, reject, queue info:{}",
+                          threadPoolExecutor);
+                    } else {
+                      log.error(e.getMessage(), e);
+                    }
+                  }
+                })
+            .setPrefix("hivemq-tdengine-")
+            .setKeepAliveTime(TimeUnit.MINUTES.toMillis(1))
+            .setQueueSize(config.getThreadPool().getQueue())
+            .build();
+
     if (config.isJdbcEnable()) {
       try {
         register(new JdbcDao(this.config.getJdbc()));
@@ -113,7 +117,7 @@ public class MqttPayloadService {
       InetAddress inetAddress,
       long timestamp,
       byte[] payload) {
-    EXECUTOR.execute(
+    threadPoolExecutor.execute(
         () ->
             daoList.parallelStream()
                 .forEach(

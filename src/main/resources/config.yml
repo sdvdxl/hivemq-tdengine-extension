@@ -1,3 +1,7 @@
+threadPool:
+  core: 4
+  max: 64
+  queue: 5000
 jdbc:
   enable: true
   driver: com.taosdata.jdbc.TSDBDriver

@@ -21,6 +21,19 @@ public class TdEngineConfig {
 
   private JdbcConfig jdbc;
   private RestConfig rest;
+  private ThreadPoolConfig threadPool;
+
+  public static Logger getLog() {
+    return log;
+  }
+
+  public ThreadPoolConfig getThreadPool() {
+    return threadPool;
+  }
+
+  public void setThreadPool(ThreadPoolConfig threadPool) {
+    this.threadPool = threadPool;
+  }
 
   public JdbcConfig getJdbc() {
     return jdbc;
@@ -59,6 +72,19 @@ public class TdEngineConfig {
     if (rest != null && rest.isEnable()) {
       log.info("rest config enabled");
     }
+
+    if (threadPool == null) {
+      threadPool = new ThreadPoolConfig();
+    }
+    if (threadPool.getCore() < 1) {
+      threadPool.setCore(ThreadPoolConfig.DEFAULT_CORE);
+    }
+    if (threadPool.getMax() < threadPool.getCore()) {
+      threadPool.setMax(ThreadPoolConfig.DEFAULT_MAX);
+    }
+    if (threadPool.getQueue() < 1) {
+      threadPool.setCore(ThreadPoolConfig.DEFAULT_QUEUE);
+    }
   }
 
   @JsonIgnore
@@ -69,5 +95,39 @@ public class TdEngineConfig {
   @JsonIgnore
   public boolean isRestEnable() {
     return this.rest != null && rest.isEnable();
+  }
+
+  public static class ThreadPoolConfig {
+    public static final int DEFAULT_CORE = Runtime.getRuntime().availableProcessors();
+    public static final int DEFAULT_MAX = DEFAULT_CORE * 2;
+    public static final int DEFAULT_QUEUE = 1000;
+
+    private int core = DEFAULT_CORE;
+    private int max = DEFAULT_MAX;
+    private int queue = DEFAULT_QUEUE;
+
+    public int getCore() {
+      return core;
+    }
+
+    public void setCore(int core) {
+      this.core = core;
+    }
+
+    public int getMax() {
+      return max;
+    }
+
+    public void setMax(int max) {
+      this.max = max;
+    }
+
+    public int getQueue() {
+      return queue;
+    }
+
+    public void setQueue(int queue) {
+      this.queue = queue;
+    }
   }
 }
