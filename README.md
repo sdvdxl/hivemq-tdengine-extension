@@ -44,6 +44,56 @@
 
 ## 测试
 
+### 20个publisher，每个100个消息，一共2000个消息
+
+`bin/mqttloader -b tcp://127.0.0.1:1883 -p 20 -m 100`
+
+```
+Measurement started: 2020-10-02 13:50:09.701 CST
+Measurement ended: 2020-10-02 13:50:19.942 CST
+
+-----Publisher-----
+Maximum throughput[msg/s]: 2000
+Average throughput[msg/s]: 2000.00
+Number of published messages: 2000
+Per second throughput[msg/s]: 2000
+
+-----Subscriber-----
+Maximum throughput[msg/s]: 1070
+Average throughput[msg/s]: 500.00
+Number of received messages: 2000
+Per second throughput[msg/s]: 505, 410, 1070, 15
+Maximum latency[ms]: 2847
+Average latency[ms]: 1612.60
+```
+
+**全部有效写入库中。**
+
+### 20个publisher，每个100个消息，一共2000个消息
+
+`bin/mqttloader -b tcp://127.0.0.1:1883 -p 20 -m 500`
+
+```
+Measurement started: 2020-10-02 13:52:34.530 CST
+Measurement ended: 2020-10-02 13:52:49.761 CST
+
+-----Publisher-----
+Maximum throughput[msg/s]: 9889
+Average throughput[msg/s]: 5000.00
+Number of published messages: 10000
+Per second throughput[msg/s]: 9889, 111
+
+-----Subscriber-----
+Maximum throughput[msg/s]: 2498
+Average throughput[msg/s]: 1111.11
+Number of received messages: 10000
+Per second throughput[msg/s]: 111, 1750, 2145, 2259, 2498, 1156, 48, 0, 33
+Maximum latency[ms]: 7136
+Average latency[ms]: 2811.72
+```
+
+有效写入库中： 8867 条。
+
 ## TODO
 
 - [ ] 支持热加载配置文件
