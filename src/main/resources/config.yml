@@ -7,7 +7,7 @@ jdbc:
   database: mqtt
   table: 'mqtt_payload'
   # RAW origin ; BASE64 base64 encoded; HEX hex;
-  payloadEncoder: BASE64
+  payloadCoder: BASE64
   pool:
     # maximum number of connection in the pool
     maxActive: 10
