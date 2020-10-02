@@ -90,7 +90,7 @@ public class MqttPayloadService {
       Qos qos,
       InetAddress inetAddress,
       long timestamp,
-      byte[] payload) { // todo thread pool
+      byte[] payload) {
     daoList.parallelStream()
         .forEach(dao -> doSave(clientId, topic, qos, inetAddress, timestamp, payload, dao));
   }

@@ -21,6 +21,8 @@ import com.hivemq.extension.sdk.api.interceptor.publish.PublishInboundIntercepto
 import com.hivemq.extension.sdk.api.interceptor.publish.parameter.PublishInboundInput;
 import com.hivemq.extension.sdk.api.interceptor.publish.parameter.PublishInboundOutput;
 import com.hivemq.extension.sdk.api.packets.publish.ModifiablePublishPacket;
+import java.lang.Thread.UncaughtExceptionHandler;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
@@ -40,6 +42,17 @@ public class TdEngineMessageInBoundInterceptor implements PublishInboundIntercep
       new ThreadPoolUtil.Builder()
           .setCore(Runtime.getRuntime().availableProcessors())
           .setMax(Runtime.getRuntime().availableProcessors() * 2)
+          .setUncaughtExceptionHandler(
+              new UncaughtExceptionHandler() {
+                @Override
+                public void uncaughtException(Thread t, Throwable e) {
+                  if (e instanceof RejectedExecutionException) {
+                    log.warn("save mqtt payload queue full, reject, queue info:{}", EXECUTOR);
+                  } else {
+                    log.error(e.getMessage(), e);
+                  }
+                }
+              })
           .setPrefix("hivemq-tdengine-")
           .setKeepAliveTime(TimeUnit.MINUTES.toMillis(1))
           .setQueueSize(1000)
@@ -56,6 +69,15 @@ public class TdEngineMessageInBoundInterceptor implements PublishInboundIntercep
       final @NotNull PublishInboundInput publishInboundInput,
       final @NotNull PublishInboundOutput publishInboundOutput) {
     final ModifiablePublishPacket publishPacket = publishInboundOutput.getPublishPacket();
+    try {
+      doSave(publishInboundInput, publishPacket);
+    } catch (Exception e) {
+      log.error(e.getMessage(), e);
+    }
+  }
+
+  private void doSave(
+      PublishInboundInput publishInboundInput, ModifiablePublishPacket publishPacket) {
     EXECUTOR.execute(
         () -> {
           publishPacket

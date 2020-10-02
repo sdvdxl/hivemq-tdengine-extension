@@ -59,15 +59,6 @@ public class ThreadPoolUtil {
     return THREAD_POOL_EXECUTOR_CONCURRENT_HASH_MAP.get(name);
   }
 
-  /**
-   * 是否开启记录所有的线程异常信息，建议开启，默认开启
-   *
-   * @param enable true 开启，false 关闭
-   */
-  public static void logAllThreadException(boolean enable) {
-    Thread.setDefaultUncaughtExceptionHandler(enable ? DEFAULT_UNCAUGHT_EXCEPTION_HANDLER : null);
-  }
-
   public static void close() {
     try {
       THREAD_POOL_EXECUTOR_CONCURRENT_HASH_MAP
@@ -105,6 +96,11 @@ public class ThreadPoolUtil {
 
     private UncaughtExceptionHandler uncaughtExceptionHandler = DEFAULT_UNCAUGHT_EXCEPTION_HANDLER;
     private boolean scheduled;
+
+    public Builder setUncaughtExceptionHandler(UncaughtExceptionHandler uncaughtExceptionHandler) {
+      this.uncaughtExceptionHandler = uncaughtExceptionHandler;
+      return this;
+    }
 
     public Builder setCore(int core) {
       this.core = core;
