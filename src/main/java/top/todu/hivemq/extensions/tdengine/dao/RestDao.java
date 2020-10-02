@@ -53,7 +53,7 @@ public class RestDao implements TdEngineDao {
   private void createDB() {
     boolean success = httpUtil.post(String.format(JdbcDao.SQL_CREATE_DB, config.getDatabase()));
     if (success) {
-      log.info("created db: {}", config.getDatabase());
+      log.info("rest created db: {}", config.getDatabase());
     }
   }
 
@@ -62,7 +62,7 @@ public class RestDao implements TdEngineDao {
         httpUtil.post(
             String.format(JdbcDao.SQL_CREATE_TABLE, config.getDatabase(), config.getTable()));
     if (success) {
-      log.info("created table: {}.{}", config.getDatabase(), config.getTable());
+      log.info("rest created table: {}.{}", config.getDatabase(), config.getTable());
     }
   }
 

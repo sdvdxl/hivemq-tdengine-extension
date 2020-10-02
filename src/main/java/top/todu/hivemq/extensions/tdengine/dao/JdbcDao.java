@@ -1,27 +1,13 @@
 package top.todu.hivemq.extensions.tdengine.dao;
 
-import static com.alibaba.druid.pool.DruidDataSourceFactory.PROP_DRIVERCLASSNAME;
-import static com.alibaba.druid.pool.DruidDataSourceFactory.PROP_INITIALSIZE;
-import static com.alibaba.druid.pool.DruidDataSourceFactory.PROP_MAXACTIVE;
-import static com.alibaba.druid.pool.DruidDataSourceFactory.PROP_MAXWAIT;
-import static com.alibaba.druid.pool.DruidDataSourceFactory.PROP_MINEVICTABLEIDLETIMEMILLIS;
-import static com.alibaba.druid.pool.DruidDataSourceFactory.PROP_MINIDLE;
-import static com.alibaba.druid.pool.DruidDataSourceFactory.PROP_PASSWORD;
-import static com.alibaba.druid.pool.DruidDataSourceFactory.PROP_TESTONBORROW;
-import static com.alibaba.druid.pool.DruidDataSourceFactory.PROP_TESTONRETURN;
-import static com.alibaba.druid.pool.DruidDataSourceFactory.PROP_TESTWHILEIDLE;
-import static com.alibaba.druid.pool.DruidDataSourceFactory.PROP_TIMEBETWEENEVICTIONRUNSMILLIS;
-import static com.alibaba.druid.pool.DruidDataSourceFactory.PROP_URL;
-import static com.alibaba.druid.pool.DruidDataSourceFactory.PROP_USERNAME;
 import static top.todu.hivemq.extensions.tdengine.util.SqlUtil.buildInsertSql;
 
 import coder.PayloadCoder;
-import com.alibaba.druid.pool.DruidDataSource;
-import com.alibaba.druid.pool.DruidDataSourceFactory;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.Properties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import top.todu.hivemq.extensions.tdengine.config.JdbcConfig;
@@ -41,7 +27,7 @@ public class JdbcDao implements TdEngineDao {
       "insert into %s.%s(ts, client_id, topic, qos, ip, payload) values(?, ?, ?, ?, ?, ?)";
   private final JdbcConfig config;
   private final PayloadCoder payloadCoder;
-  private DruidDataSource dataSource;
+  private HikariDataSource dataSource;
 
   public JdbcDao(JdbcConfig config) {
     this.config = config;
@@ -61,35 +47,20 @@ public class JdbcDao implements TdEngineDao {
   }
 
   public void initDatasource() {
-    Properties properties = new Properties();
-    properties.put(PROP_DRIVERCLASSNAME, config.getDriver());
-    properties.put(PROP_URL, config.getUrl());
-    properties.put(PROP_USERNAME, config.getUsername());
-    properties.put(PROP_PASSWORD, config.getPassword());
-    properties.put(PROP_MAXACTIVE, String.valueOf(config.getPool().getMaxActive()));
-    properties.put(PROP_INITIALSIZE, String.valueOf(config.getPool().getInitialSize()));
-    properties.put(PROP_MAXWAIT, String.valueOf(config.getPool().getMaxWait()));
-    properties.put(PROP_MINIDLE, String.valueOf(config.getPool().getMinIdle()));
-    // the interval milliseconds to test connection
-    properties.put(PROP_TIMEBETWEENEVICTIONRUNSMILLIS, "3000");
-    // the minimum milliseconds to keep idle
-    properties.put(PROP_MINEVICTABLEIDLETIMEMILLIS, "60000");
-    // validation query
-    //    properties.put(PROP_VALIDATIONQUERY, config.getPool().getValidationQuery());
-    // test connection while idle
-    properties.put(PROP_TESTWHILEIDLE, "false");
-    // don't need while testWhileIdle is true
-    properties.put(PROP_TESTONBORROW, "false");
-    // don't need while testWhileIdle is true
-    properties.put(PROP_TESTONRETURN, "false");
-    log.info("data source config: {}", properties);
-    // create druid datasource
-    try {
-      dataSource = (DruidDataSource) DruidDataSourceFactory.createDataSource(properties);
-      dataSource.init();
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
+
+    HikariConfig hikariConfig = new HikariConfig();
+    hikariConfig.setJdbcUrl(config.getUrl());
+    hikariConfig.setUsername(config.getUsername());
+    hikariConfig.setPassword(config.getPassword());
+    hikariConfig.setMinimumIdle(config.getPool().getMinIdle());
+    hikariConfig.setMaximumPoolSize(config.getPool().getMaxActive());
+    hikariConfig.setConnectionTimeout(config.getPool().getMaxWait());
+    hikariConfig.setIdleTimeout(config.getPool().getMaxWait());
+    hikariConfig.setDriverClassName(config.getDriver());
+    // 报错
+    //    hikariConfig.setConnectionTestQuery(config.getPool().getValidationQuery());
+    hikariConfig.setValidationTimeout(config.getPool().getMaxWait());
+    dataSource = new HikariDataSource(hikariConfig);
   }
 
   @Override
@@ -137,7 +108,7 @@ public class JdbcDao implements TdEngineDao {
   }
 
   private void createTable() {
-    log.info("create table: {}", config.getTable());
+    log.info("jdbc create table: {}", config.getTable());
     try (Connection conn = dataSource.getConnection()) {
       try (Statement stmt = conn.createStatement()) {
         stmt.execute(String.format(SQL_CREATE_TABLE, config.getDatabase(), config.getTable()));
@@ -149,11 +120,10 @@ public class JdbcDao implements TdEngineDao {
 
   private void createDB() {
 
-    log.info("create database: {}", config.getDatabase());
+    log.info("jdbc create database: {}", config.getDatabase());
     try (Connection conn = dataSource.getConnection()) {
 
       try (Statement stmt = conn.createStatement()) {
-        stmt.executeUpdate("use " + config.getDatabase());
         stmt.executeUpdate(String.format(SQL_CREATE_DB, config.getDatabase()));
       }
     } catch (Exception e) {

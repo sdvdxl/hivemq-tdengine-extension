@@ -39,7 +39,7 @@
     <asciidoctor.version>1.5.7.1</asciidoctor.version>
     <output.dir>${basedir}</output.dir>
     <source.document.name>README.md</source.document.name>
-    <taos.driver.version>2.0.4</taos.driver.version>
+    <taos.driver.version>2.0.7</taos.driver.version>
   </properties>
 
   <dependencies>
@@ -85,10 +85,15 @@
       <artifactId>taos-jdbcdriver</artifactId>
       <version>${taos.driver.version}</version>
     </dependency>
+<!--    <dependency>-->
+<!--      <groupId>com.alibaba</groupId>-->
+<!--      <artifactId>druid</artifactId>-->
+<!--      <version>1.1.24</version>-->
+<!--    </dependency>-->
     <dependency>
-      <groupId>com.alibaba</groupId>
-      <artifactId>druid</artifactId>
-      <version>1.1.24</version>
+      <groupId>com.zaxxer</groupId>
+      <artifactId>HikariCP</artifactId>
+      <version>3.4.2</version>
     </dependency>
     <dependency>
       <groupId>com.hivemq</groupId>
