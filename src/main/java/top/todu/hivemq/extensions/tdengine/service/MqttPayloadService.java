@@ -1,8 +1,12 @@
 package top.todu.hivemq.extensions.tdengine.service;
 
 import com.hivemq.extension.sdk.api.packets.general.Qos;
+import java.lang.Thread.UncaughtExceptionHandler;
 import java.net.InetAddress;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import top.todu.hivemq.extensions.tdengine.TdEngine;
@@ -19,8 +23,26 @@ import top.todu.hivemq.extensions.tdengine.util.ThreadPoolUtil;
  * @date 2020/9/29 14:48 <br>
  */
 public class MqttPayloadService {
-
   private static final Logger log = LoggerFactory.getLogger(MqttPayloadService.class);
+  private static final ThreadPoolExecutor EXECUTOR =
+      new ThreadPoolUtil.Builder()
+          .setCore(Runtime.getRuntime().availableProcessors())
+          .setMax(Runtime.getRuntime().availableProcessors() * 8)
+          .setUncaughtExceptionHandler(
+              new UncaughtExceptionHandler() {
+                @Override
+                public void uncaughtException(Thread t, Throwable e) {
+                  if (e instanceof RejectedExecutionException) {
+                    log.warn("save mqtt payload queue full, reject, queue info:{}", EXECUTOR);
+                  } else {
+                    log.error(e.getMessage(), e);
+                  }
+                }
+              })
+          .setPrefix("hivemq-tdengine-")
+          .setKeepAliveTime(TimeUnit.MINUTES.toMillis(1))
+          .setQueueSize(1000)
+          .build();
   private final TdEngineConfig config;
   private final CopyOnWriteArrayList<TdEngineDao> daoList = new CopyOnWriteArrayList<>();
 
@@ -91,8 +113,11 @@ public class MqttPayloadService {
       InetAddress inetAddress,
       long timestamp,
       byte[] payload) {
-    daoList.parallelStream()
-        .forEach(dao -> doSave(clientId, topic, qos, inetAddress, timestamp, payload, dao));
+    EXECUTOR.execute(
+        () ->
+            daoList.parallelStream()
+                .forEach(
+                    dao -> doSave(clientId, topic, qos, inetAddress, timestamp, payload, dao)));
   }
 
   private void doSave(

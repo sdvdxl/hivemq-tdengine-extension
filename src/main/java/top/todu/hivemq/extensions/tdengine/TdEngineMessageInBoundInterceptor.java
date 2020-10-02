@@ -21,14 +21,11 @@ import com.hivemq.extension.sdk.api.interceptor.publish.PublishInboundIntercepto
 import com.hivemq.extension.sdk.api.interceptor.publish.parameter.PublishInboundInput;
 import com.hivemq.extension.sdk.api.interceptor.publish.parameter.PublishInboundOutput;
 import com.hivemq.extension.sdk.api.packets.publish.ModifiablePublishPacket;
-import java.lang.Thread.UncaughtExceptionHandler;
-import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.nio.ByteBuffer;
+import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import top.todu.hivemq.extensions.tdengine.service.MqttPayloadService;
-import top.todu.hivemq.extensions.tdengine.util.ThreadPoolUtil;
 
 /**
  * @author sdvdxl
@@ -38,25 +35,7 @@ public class TdEngineMessageInBoundInterceptor implements PublishInboundIntercep
 
   private static final Logger log =
       LoggerFactory.getLogger(TdEngineMessageInBoundInterceptor.class);
-  private static final ThreadPoolExecutor EXECUTOR =
-      new ThreadPoolUtil.Builder()
-          .setCore(Runtime.getRuntime().availableProcessors())
-          .setMax(Runtime.getRuntime().availableProcessors() * 2)
-          .setUncaughtExceptionHandler(
-              new UncaughtExceptionHandler() {
-                @Override
-                public void uncaughtException(Thread t, Throwable e) {
-                  if (e instanceof RejectedExecutionException) {
-                    log.warn("save mqtt payload queue full, reject, queue info:{}", EXECUTOR);
-                  } else {
-                    log.error(e.getMessage(), e);
-                  }
-                }
-              })
-          .setPrefix("hivemq-tdengine-")
-          .setKeepAliveTime(TimeUnit.MINUTES.toMillis(1))
-          .setQueueSize(1000)
-          .build();
+
   private final MqttPayloadService mqttPayloadService;
 
   public TdEngineMessageInBoundInterceptor(MqttPayloadService mqttPayloadService) {
@@ -78,25 +57,18 @@ public class TdEngineMessageInBoundInterceptor implements PublishInboundIntercep
 
   private void doSave(
       PublishInboundInput publishInboundInput, ModifiablePublishPacket publishPacket) {
-    EXECUTOR.execute(
-        () -> {
-          publishPacket
-              .getPayload()
-              .ifPresent(
-                  b -> {
-                    byte[] buf = new byte[b.limit()];
-                    b.get(buf);
-                    mqttPayloadService.save(
-                        publishInboundInput.getClientInformation().getClientId(),
-                        publishPacket.getTopic(),
-                        publishPacket.getQos(),
-                        publishInboundInput
-                            .getConnectionInformation()
-                            .getInetAddress()
-                            .orElseGet(null),
-                        publishPacket.getTimestamp(),
-                        buf);
-                  });
-        });
+    Optional<ByteBuffer> optionalByteBuffer = publishInboundInput.getPublishPacket().getPayload();
+    if (optionalByteBuffer.isPresent()) {
+      ByteBuffer payload = optionalByteBuffer.get();
+      byte[] buf = new byte[payload.limit()];
+      payload.get(buf);
+      mqttPayloadService.save(
+          publishInboundInput.getClientInformation().getClientId(),
+          publishPacket.getTopic(),
+          publishPacket.getQos(),
+          publishInboundInput.getConnectionInformation().getInetAddress().orElseGet(null),
+          publishPacket.getTimestamp(),
+          buf);
+    }
   }
 }

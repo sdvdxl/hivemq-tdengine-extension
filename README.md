@@ -18,8 +18,8 @@
 本插件当前测试版本：
 
 - HiveMQ 4.4.1
-- TDengine Server 2.0.0.0 (docker)
-- TDengine JDBC 驱动 2.0.0
+- TDengine Server 2.0.4.0
+- TDengine JDBC 驱动 2.0.7
 
 ## 使用说明
 
@@ -42,6 +42,8 @@
 
 ![时序图](https://public-links.todu.top/hivemq-tdengine-extension-seq.jpg?imageMogr2/thumbnail/!100p)
 
+## 测试
+
 ## TODO
 
 - [ ] 支持热加载配置文件
@@ -50,4 +52,4 @@
 ## 注意事项
 
 1. jdbc方式不支持hivemq 重新热加载插件（动态库重复问题），如果启用了jdbc方式并且更改了配置或者插件版本，需要重启hivemq server
-1. 根据测试，jdbc驱动版本 2.0.4 操作 server 2.0.0.0 会报错，所以驱动需要根据server版本选择
+1. 本插件是一个通用处理方案，所以使用了一张表来存储数据。因为 TDengine 设计的是时间戳一样，就会丢失后面的时间戳一样的消息，所以该插件使用的时候需要按照自己的mqtt的clientId 或者username 重新改造一下，尽量做到每个设备一个表。
