@@ -52,7 +52,11 @@
 
 ## 测试
 
-### 20个publisher，每个100个消息，一共2000个消息
+**2核4G；存储核心现程4，最大16，队列1000。**
+
+### JDBC
+
+#### 20个publisher，每个100个消息，一共2000个消息
 
 `bin/mqttloader -b tcp://127.0.0.1:1883 -p 20 -m 100`
 
@@ -77,7 +81,7 @@ Average latency[ms]: 1612.60
 
 **全部有效写入库中。**
 
-### 20个publisher，每个100个消息，一共2000个消息
+#### 20个publisher，每个500个消息，一共10000个消息
 
 `bin/mqttloader -b tcp://127.0.0.1:1883 -p 20 -m 500`
 
@@ -101,6 +105,60 @@ Average latency[ms]: 2811.72
 ```
 
 有效写入库中： 8867 条。
+
+### REST
+
+#### 20个publisher，每个100个消息，一共2000个消息
+
+`bin/mqttloader -b tcp://127.0.0.1:1883 -p 20 -m 100`
+
+```
+Measurement started: 2020-10-02 14:10:14.697 CST
+Measurement ended: 2020-10-02 14:10:23.978 CST
+
+-----Publisher-----
+Maximum throughput[msg/s]: 2000
+Average throughput[msg/s]: 2000.00
+Number of published messages: 2000
+Per second throughput[msg/s]: 2000
+
+-----Subscriber-----
+Maximum throughput[msg/s]: 1213
+Average throughput[msg/s]: 666.67
+Number of received messages: 2000
+Per second throughput[msg/s]: 1213, 782, 5
+Maximum latency[ms]: 1767
+Average latency[ms]: 611.88
+```
+
+有效写入库中： 1262 条。
+
+#### 20个publisher，每个500个消息，一共10000个消息
+
+```
+Measurement started: 2020-10-02 14:17:27.436 CST
+Measurement ended: 2020-10-02 14:17:40.148 CST
+
+-----Publisher-----
+Maximum throughput[msg/s]: 9475
+Average throughput[msg/s]: 5000.00
+Number of published messages: 10000
+Per second throughput[msg/s]: 9475, 525
+
+-----Subscriber-----
+Maximum throughput[msg/s]: 4234
+Average throughput[msg/s]: 1666.67
+Number of received messages: 10000
+Per second throughput[msg/s]: 632, 3264, 1210, 4234, 597, 63
+Maximum latency[ms]: 4676
+Average latency[ms]: 1900.11
+```
+
+有效写入库中： 5981 条。
+
+有效入库：成功执行插入操作，没有抛出异常。没有写入库中是因为写入速率达不到，线程拒绝执行导致。
+
+**增加优化线程数量和队列大小会提升性能，即有效写入数量**
 
 ## 注意事项
 
