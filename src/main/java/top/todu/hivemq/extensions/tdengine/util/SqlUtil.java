@@ -5,6 +5,8 @@ import static com.fasterxml.jackson.databind.util.StdDateFormat.DATE_FORMAT_STR_
 import coder.PayloadCoder;
 import java.util.TimeZone;
 import org.apache.commons.lang3.time.FastDateFormat;
+import top.todu.hivemq.extensions.tdengine.config.TdEngineConfig.TableNameFormat;
+import top.todu.hivemq.extensions.tdengine.config.TdEngineConfig.TableNameUseType;
 
 /**
  * sql util <br>
@@ -48,6 +50,42 @@ public class SqlUtil {
             .append(ip)
             .append("', '")
             // raw need escape char "'", base64 not need
+            .append(payloadCoder == PayloadCoder.RAW ? escape(encodedPayload) : encodedPayload)
+            .append("');");
+    return sqlBuilder.toString();
+  }
+
+  public static String buildSuperTableInsertSql(
+      String database,
+      String superTable,
+      TableNameFormat tableNameFormat,
+      TableNameUseType tableNameUseType,
+      String clientId,
+      String topic,
+      int qos,
+      String ip,
+      long timestamp,
+      byte[] payload,
+      PayloadCoder payloadCoder) {
+
+    String tableName = tableNameFormat.format(tableNameUseType.get(clientId,user));
+    String encodedPayload = payloadCoder.encode(payload);
+    StringBuilder sqlBuilder =
+        new StringBuilder("insert into ")
+            .append(database)
+            .append(".")
+            .append(table)
+            .append(" using ").append(superTable).append(" tags ('")
+            .append(escape(clientId))
+            .append("', '")
+            .append(escape(topic))
+            .append("', ")
+            .append(qos)
+            .append(", '")
+            .append(ip)
+            .append("') ").append("values ('")
+            .append(DATE_FORMAT.format(timestamp))
+            .append("', '")
             .append(payloadCoder == PayloadCoder.RAW ? escape(encodedPayload) : encodedPayload)
             .append("');");
     return sqlBuilder.toString();

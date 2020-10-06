@@ -1,13 +1,10 @@
 package top.todu.hivemq.extensions.tdengine.dao;
 
-import static top.todu.hivemq.extensions.tdengine.util.SqlUtil.buildInsertSql;
+import static top.todu.hivemq.extensions.tdengine.util.SqlUtil.buildSuperTableInsertSql;
 
-import com.zaxxer.hikari.HikariConfig;
-import com.zaxxer.hikari.HikariDataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import top.todu.hivemq.extensions.tdengine.config.TdEngineConfig;
@@ -18,37 +15,24 @@ import top.todu.hivemq.extensions.tdengine.config.TdEngineConfig;
  * @author sdvdxl <杜龙少> <br>
  * @date 2020/9/29 14:33 <br>
  */
-public class JdbcDao extends AbstractDao {
-  protected static final String DRIVER_CLASS_NAME = "com.taosdata.jdbc.TSDBDriver";
-  private static final Logger log = LoggerFactory.getLogger(JdbcDao.class);
+public class JdbcSuperTableDao extends JdbcDao {
+  public static final String SQL_CREATE_TABLE =
+      "create table if not exists %s.%s(ts timestamp, client_id nchar(1024), topic nchar(1024), qos tinyint, ip nchar(512), payload nchar(1024) );";
+  public static final String SQL_CREATE_SUPER_TABLE =
+      "create table if not exists %s.%s(ts timestamp, payload nchar(1024) ) tags (client_id nchar(1024), topic nchar(1024), qos tinyint, ip nchar(512));";
+  private static final String SQL_CREATE_DB = "create database if not exists %s ;";
+  private static final String DRIVER_CLASS_NAME = "com.taosdata.jdbc.TSDBDriver";
+  private static final Logger log = LoggerFactory.getLogger(JdbcSuperTableDao.class);
+  private static final String SQL_INSERT =
+      "insert into %s.%s(ts, client_id, topic, qos, ip, payload) values(?, ?, ?, ?, ?, ?)";
 
-  protected HikariDataSource dataSource;
-
-  public JdbcDao(TdEngineConfig config) {
+  public JdbcSuperTableDao(TdEngineConfig config) {
     super(config);
   }
 
   @Override
-  public void init() {
-    initDatasource();
-    createDB();
-    createTable();
-  }
-
-  public void initDatasource() {
-
-    HikariConfig hikariConfig = new HikariConfig();
-    hikariConfig.setJdbcUrl(config.getUrl());
-    hikariConfig.setUsername(config.getUsername());
-    hikariConfig.setPassword(config.getPassword());
-    hikariConfig.setMinimumIdle(1);
-    hikariConfig.setMaximumPoolSize(config.getMaxConnections());
-    hikariConfig.setConnectionTimeout(config.getTimeout());
-    hikariConfig.setIdleTimeout(TimeUnit.MINUTES.toMillis(1));
-    hikariConfig.setDriverClassName(DRIVER_CLASS_NAME);
-    // 报错,不支持空闲连接检测
-    //    hikariConfig.setConnectionTestQuery(config.getPool().getValidationQuery());
-    dataSource = new HikariDataSource(hikariConfig);
+  public String getPayloadCoder() {
+    return payloadCoder.name();
   }
 
   @Override
@@ -62,9 +46,11 @@ public class JdbcDao extends AbstractDao {
 
       try (Statement stmt = conn.createStatement()) {
         String sql =
-            buildInsertSql(
+            buildSuperTableInsertSql(
                 config.getDatabase(),
                 config.getTable().getName(),
+                config.getTable().getFormat(),
+                config.getTable().getUse(),
                 clientId,
                 topic,
                 qos,
@@ -96,26 +82,15 @@ public class JdbcDao extends AbstractDao {
     log.info("druid datasource closed");
   }
 
+  @Override
   public void createTable() {
-    log.info("jdbc create table: {}", config.getTable());
+    log.info("jdbc create super table: {}", config.getTable());
     try (Connection conn = dataSource.getConnection()) {
       try (Statement stmt = conn.createStatement()) {
-        stmt.execute(String.format(SQL_CREATE_TABLE, config.getDatabase(), config.getTable()));
+        stmt.execute(
+            String.format(SQL_CREATE_SUPER_TABLE, config.getDatabase(), config.getTable()));
       }
     } catch (SQLException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  public void createDB() {
-
-    log.info("jdbc create database: {}", config.getDatabase());
-    try (Connection conn = dataSource.getConnection()) {
-
-      try (Statement stmt = conn.createStatement()) {
-        stmt.executeUpdate(String.format(SQL_CREATE_DB, config.getDatabase()));
-      }
-    } catch (Exception e) {
       throw new RuntimeException(e);
     }
   }

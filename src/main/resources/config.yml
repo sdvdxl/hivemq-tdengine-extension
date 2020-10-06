@@ -9,10 +9,25 @@ url: "jdbc:TAOS://localhost:6030/?timezone=Asia/Chongqing"
 username: root
 password: taosdata
 database: mqtt
-table: 'mqtt_payload'
+table:
+  name: 'mqtt_payload'
+  # insert mode of table
+  # SINGLE_TABLE use single table to store data
+  # SUPER_TABLE use super table to store data
+  mode: SUPER_TABLE
+  # if table mode is SUPER_TABLE, tableNameMode is required
+  # The available modes are: USERNAME, CLIENT_ID
+  use: USERNAME
+  # FIXED replace none number or letter to '_'
+  # MD5 hash to md5
+  format: FIXED
+
+
 # RAW origin ; BASE64 base64 encoded; HEX hex;
 payloadCoder: BASE64
 # maximum wait milliseconds for connection (connect/read) timeout
 timeout: 10000
 # maximum number of connection in the pool
 maxConnections: 10
+
+

@@ -53,7 +53,7 @@ public class HttpDao implements TdEngineDao {
   }
 
   private void createDB() {
-    boolean success = httpUtil.post(String.format(JdbcDao.SQL_CREATE_DB, config.getDatabase()));
+    boolean success = httpUtil.post(String.format(SQL_CREATE_DB, config.getDatabase()));
     if (success) {
       log.info("rest created db: {}", config.getDatabase());
     }
@@ -61,8 +61,7 @@ public class HttpDao implements TdEngineDao {
 
   private void createTable() {
     boolean success =
-        httpUtil.post(
-            String.format(JdbcDao.SQL_CREATE_TABLE, config.getDatabase(), config.getTable()));
+        httpUtil.post(String.format(SQL_CREATE_TABLE, config.getDatabase(), config.getTable()));
     if (success) {
       log.info("rest created table: {}.{}", config.getDatabase(), config.getTable());
     }
@@ -70,7 +69,8 @@ public class HttpDao implements TdEngineDao {
 
   @Override
   public void save(
-      String clientId, String topic, int qos, String ip, long timestamp, byte[] payload) {
+      String clientId, String username, String topic, int qos, String ip, long timestamp,
+      byte[] payload) {
     String sql =
         buildInsertSql(
             config.getDatabase(),

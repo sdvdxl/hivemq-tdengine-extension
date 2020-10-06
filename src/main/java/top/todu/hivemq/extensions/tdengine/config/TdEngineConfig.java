@@ -19,7 +19,7 @@ public class TdEngineConfig {
   private String url;
   private String username;
   private String password;
-  private String table;
+  private TableInfo table;
   private String database;
   private PayloadCoder payloadCoder;
   private int maxConnections;
@@ -73,11 +73,11 @@ public class TdEngineConfig {
     this.password = password;
   }
 
-  public String getTable() {
+  public TableInfo getTable() {
     return table;
   }
 
-  public void setTable(String table) {
+  public void setTable(TableInfo table) {
     this.table = table;
   }
 
@@ -107,7 +107,7 @@ public class TdEngineConfig {
 
   public void init() {
 
-    if (mode==null){
+    if (mode == null) {
       throw new RuntimeException("mode type is required , support HTTP or JDBC");
     }
 
@@ -138,6 +138,21 @@ public class TdEngineConfig {
     HTTP,
     /** JDBC sdk */
     JDBC
+  }
+
+  public enum TableMode {
+    SINGLE_TABLE,
+    SUPER_TABLE
+  }
+
+  public enum TableNameUseType {
+    USERNAME,
+    CLIENT_ID
+  }
+
+  public enum TableNameFormat {
+    FIXED,
+    MD5
   }
 
   public static class ConnectPool {
@@ -179,6 +194,60 @@ public class TdEngineConfig {
 
     public void setQueue(int queue) {
       this.queue = queue;
+    }
+  }
+
+  public static class TableInfo {
+    private String name;
+    private TableMode mode;
+    private TableNameUseType use;
+    private TableNameFormat format;
+
+    public String getName() {
+      return name;
+    }
+
+    public void setName(String name) {
+      this.name = name;
+    }
+
+    public TableMode getMode() {
+      return mode;
+    }
+
+    public void setMode(TableMode mode) {
+      this.mode = mode;
+    }
+
+    public TableNameUseType getUse() {
+      return use;
+    }
+
+    public void setUse(TableNameUseType use) {
+      this.use = use;
+    }
+
+    public TableNameFormat getFormat() {
+      return format;
+    }
+
+    public void setFormat(TableNameFormat format) {
+      this.format = format;
+    }
+
+    @Override
+    public String toString() {
+      return "TableInfo{"
+          + "name='"
+          + name
+          + '\''
+          + ", mode="
+          + mode
+          + ", use="
+          + use
+          + ", format="
+          + format
+          + '}';
     }
   }
 }

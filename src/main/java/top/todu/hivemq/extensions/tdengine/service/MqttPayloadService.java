@@ -72,16 +72,19 @@ public class MqttPayloadService {
 
   public void save(
       String clientId,
+      String username,
       String topic,
       Qos qos,
       InetAddress inetAddress,
       long timestamp,
       byte[] payload) {
-    threadPoolExecutor.execute(() -> doSave(clientId, topic, qos, inetAddress, timestamp, payload));
+    threadPoolExecutor.execute(
+        () -> doSave(clientId, username, topic, qos, inetAddress, timestamp, payload));
   }
 
   private void doSave(
       String clientId,
+      String username,
       String topic,
       Qos qos,
       InetAddress inetAddress,
@@ -89,6 +92,7 @@ public class MqttPayloadService {
       byte[] payload) {
     tdEngineDao.save(
         clientId,
+        username,
         topic,
         qos.getQosNumber(),
         inetAddress == null ? "" : inetAddress.getHostAddress(),

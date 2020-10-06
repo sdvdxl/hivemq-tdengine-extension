@@ -1,5 +1,4 @@
 # HiveMQ 4 TDengine Extension
-  
 
 ## 功能
   
@@ -15,6 +14,10 @@
 - [ ] 支持超级表/单表
 - [ ] 支持超级表表名策略（topic、client_id、username）
 
+
+阿里云 使用 username 定位一个设备 https://help.aliyun.com/document_detail/73742.html?spm=a2c4g.11186623.6.599.5c131424m9mbpK#title-s5l-k39-qti
+
+腾讯云使用clientid定位一个设备 https://cloud.tencent.com/document/product/634/32546#mqtt-.E5.8D.8F.E8.AE.AE.E8.AF.B4.E6.98.8E
 ## 支持版本
 
 - HiveMQ v4

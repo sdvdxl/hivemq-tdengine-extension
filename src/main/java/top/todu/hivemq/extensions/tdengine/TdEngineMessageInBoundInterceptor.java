@@ -64,6 +64,7 @@ public class TdEngineMessageInBoundInterceptor implements PublishInboundIntercep
       payload.get(buf);
       mqttPayloadService.save(
           publishInboundInput.getClientInformation().getClientId(),
+          null,
           publishPacket.getTopic(),
           publishPacket.getQos(),
           publishInboundInput.getConnectionInformation().getInetAddress().orElseGet(null),
