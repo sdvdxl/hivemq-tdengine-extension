@@ -8,9 +8,10 @@ import com.zaxxer.hikari.HikariDataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import top.todu.hivemq.extensions.tdengine.config.JdbcConfig;
+import top.todu.hivemq.extensions.tdengine.config.TdEngineConfig;
 
 /**
  * <br>
@@ -22,14 +23,15 @@ public class JdbcDao implements TdEngineDao {
   public static final String SQL_CREATE_DB = "create database if not exists %s ;";
   public static final String SQL_CREATE_TABLE =
       "create table if not exists %s.%s(ts timestamp, client_id nchar(1024), topic nchar(1024), qos tinyint, ip nchar(512), payload nchar(1024) );";
+  private static final String DRIVER_CLASS_NAME = "com.taosdata.jdbc.TSDBDriver";
   private static final Logger log = LoggerFactory.getLogger(JdbcDao.class);
   private static final String SQL_INSERT =
       "insert into %s.%s(ts, client_id, topic, qos, ip, payload) values(?, ?, ?, ?, ?, ?)";
-  private final JdbcConfig config;
+  private final TdEngineConfig config;
   private final PayloadCoder payloadCoder;
   private HikariDataSource dataSource;
 
-  public JdbcDao(JdbcConfig config) {
+  public JdbcDao(TdEngineConfig config) {
     this.config = config;
     this.payloadCoder = config.getPayloadCoder();
   }
@@ -52,14 +54,13 @@ public class JdbcDao implements TdEngineDao {
     hikariConfig.setJdbcUrl(config.getUrl());
     hikariConfig.setUsername(config.getUsername());
     hikariConfig.setPassword(config.getPassword());
-    hikariConfig.setMinimumIdle(config.getPool().getMinIdle());
-    hikariConfig.setMaximumPoolSize(config.getPool().getMaxActive());
-    hikariConfig.setConnectionTimeout(config.getPool().getMaxWait());
-    hikariConfig.setIdleTimeout(config.getPool().getMaxWait());
-    hikariConfig.setDriverClassName(config.getDriver());
-    // 报错
+    hikariConfig.setMinimumIdle(1);
+    hikariConfig.setMaximumPoolSize(config.getMaxConnections());
+    hikariConfig.setConnectionTimeout(config.getTimeout());
+    hikariConfig.setIdleTimeout(TimeUnit.MINUTES.toMillis(1));
+    hikariConfig.setDriverClassName(DRIVER_CLASS_NAME);
+    // 报错,不支持空闲连接检测
     //    hikariConfig.setConnectionTestQuery(config.getPool().getValidationQuery());
-    hikariConfig.setValidationTimeout(config.getPool().getMaxWait());
     dataSource = new HikariDataSource(hikariConfig);
   }
 

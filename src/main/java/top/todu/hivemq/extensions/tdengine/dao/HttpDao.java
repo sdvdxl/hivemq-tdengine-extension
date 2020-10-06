@@ -8,7 +8,7 @@ import java.util.Base64;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import top.todu.hivemq.extensions.tdengine.config.RestConfig;
+import top.todu.hivemq.extensions.tdengine.config.TdEngineConfig;
 import top.todu.hivemq.extensions.tdengine.util.HttpUtil;
 
 /**
@@ -17,13 +17,13 @@ import top.todu.hivemq.extensions.tdengine.util.HttpUtil;
  * @author sdvdxl <杜龙少> <br>
  * @date 2020/9/29 15:27 <br>
  */
-public class RestDao implements TdEngineDao {
-  private static final Logger log = LoggerFactory.getLogger(RestDao.class);
-  private final RestConfig config;
+public class HttpDao implements TdEngineDao {
+  private static final Logger log = LoggerFactory.getLogger(HttpDao.class);
+  private final TdEngineConfig config;
   private final PayloadCoder payloadCoder;
   private HttpUtil httpUtil;
 
-  public RestDao(RestConfig config) {
+  public HttpDao(TdEngineConfig config) {
     this.config = config;
     this.payloadCoder = config.getPayloadCoder();
   }
@@ -42,7 +42,9 @@ public class RestDao implements TdEngineDao {
               Base64.getEncoder()
                   .encodeToString(
                       (config.getUsername() + ":" + config.getPassword())
-                          .getBytes(StandardCharsets.UTF_8)));
+                          .getBytes(StandardCharsets.UTF_8)),
+              config.getMaxConnections(),
+              config.getTimeout());
       createDB();
       createTable();
     } catch (Exception e) {

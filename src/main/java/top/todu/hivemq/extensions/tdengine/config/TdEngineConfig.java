@@ -1,7 +1,6 @@
 package top.todu.hivemq.extensions.tdengine.config;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import java.util.TimeZone;
+import coder.PayloadCoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,18 +12,89 @@ import org.slf4j.LoggerFactory;
  */
 public class TdEngineConfig {
   private static final Logger log = LoggerFactory.getLogger(TdEngineConfig.class);
+  private static final int DEFAULT_MAX_CONNECTIONS = 4;
+  private static final int DEFAULT_TIMEOUT = 3000;
+  private Mode mode;
+  private ThreadPoolConfig threadPool;
+  private String url;
+  private String username;
+  private String password;
+  private String table;
+  private String database;
+  private PayloadCoder payloadCoder;
+  private int maxConnections;
+  private int timeout;
 
-  static {
-    TimeZone timeZone = TimeZone.getTimeZone("GMT+8");
-    TimeZone.setDefault(timeZone);
+  public Mode getMode() {
+    return mode;
   }
 
-  private JdbcConfig jdbc;
-  private RestConfig rest;
-  private ThreadPoolConfig threadPool;
+  public void setMode(Mode mode) {
+    this.mode = mode;
+  }
 
-  public static Logger getLog() {
-    return log;
+  public String getUrl() {
+    return url;
+  }
+
+  public void setUrl(String url) {
+    this.url = url;
+  }
+
+  public int getMaxConnections() {
+    return maxConnections;
+  }
+
+  public void setMaxConnections(int maxConnections) {
+    this.maxConnections = maxConnections;
+  }
+
+  public int getTimeout() {
+    return timeout;
+  }
+
+  public void setTimeout(int timeout) {
+    this.timeout = timeout;
+  }
+
+  public String getUsername() {
+    return username;
+  }
+
+  public void setUsername(String username) {
+    this.username = username;
+  }
+
+  public String getPassword() {
+    return password;
+  }
+
+  public void setPassword(String password) {
+    this.password = password;
+  }
+
+  public String getTable() {
+    return table;
+  }
+
+  public void setTable(String table) {
+    this.table = table;
+  }
+
+  public String getDatabase() {
+    return database;
+  }
+
+  public void setDatabase(String database) {
+    this.database = database;
+  }
+
+  public PayloadCoder getPayloadCoder() {
+    return payloadCoder;
+  }
+
+  public void setPayloadCoder(PayloadCoder payloadCoder) {
+    this.payloadCoder = payloadCoder;
   }
 
   public ThreadPoolConfig getThreadPool() {
@@ -35,42 +105,10 @@ public class TdEngineConfig {
     this.threadPool = threadPool;
   }
 
-  public JdbcConfig getJdbc() {
-    return jdbc;
-  }
-
-  public void setJdbc(JdbcConfig jdbc) {
-    this.jdbc = jdbc;
-  }
-
-  public RestConfig getRest() {
-    return rest;
-  }
-
-  public void setRest(RestConfig rest) {
-    this.rest = rest;
-  }
-
-  @Override
-  public String toString() {
-    return "TdEngineConfig{" + "jdbc=" + jdbc + ", rest=" + rest + '}';
-  }
-
   public void init() {
-    if (jdbc == null && rest == null) {
-      throw new RuntimeException("jdbc or rest is need at least one config");
-    }
 
-    if (jdbc != null && rest != null && !jdbc.isEnable() && !rest.isEnable()) {
-      throw new RuntimeException("jdbc or rest is need at least one config enabled");
-    }
-
-    if (jdbc != null && jdbc.isEnable()) {
-      log.info("jdbc config enabled");
-    }
-
-    if (rest != null && rest.isEnable()) {
-      log.info("rest config enabled");
+    if (mode==null){
+      throw new RuntimeException("mode type is required , support HTTP or JDBC");
     }
 
     if (threadPool == null) {
@@ -85,16 +123,29 @@ public class TdEngineConfig {
     if (threadPool.getQueue() < 1) {
       threadPool.setCore(ThreadPoolConfig.DEFAULT_QUEUE);
     }
+
+    if (maxConnections <= 0) {
+      maxConnections = DEFAULT_MAX_CONNECTIONS;
+    }
+
+    if (timeout < 1000) {
+      timeout = DEFAULT_TIMEOUT;
+    }
   }
 
-  @JsonIgnore
-  public boolean isJdbcEnable() {
-    return this.jdbc != null && jdbc.isEnable();
+  public enum Mode {
+    /** http */
+    HTTP,
+    /** JDBC sdk */
+    JDBC
   }
 
-  @JsonIgnore
-  public boolean isRestEnable() {
-    return this.rest != null && rest.isEnable();
+  public static class ConnectPool {
+
+    private int size;
+
+    /** maximum wait milliseconds for get connection from pool */
+    private int timeout;
   }
 
   public static class ThreadPoolConfig {

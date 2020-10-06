@@ -27,11 +27,11 @@ public class HttpUtil {
   private HttpUtil() {}
 
   public static HttpUtil newInstance(
-      String url, String authToken, int poolSize, int timeoutOfSecs, int maxRequestsPerHost) {
-    ConnectionPool connectionPool = new ConnectionPool(poolSize, 30, TimeUnit.SECONDS);
+      String url, String authToken, int poolSize, int timeoutOfSecs) {
+    ConnectionPool connectionPool = new ConnectionPool(poolSize, 1, TimeUnit.MINUTES);
     Dispatcher dispatcher = new Dispatcher();
-    dispatcher.setMaxRequestsPerHost(maxRequestsPerHost);
-    dispatcher.setMaxRequests(maxRequestsPerHost);
+    dispatcher.setMaxRequestsPerHost(poolSize);
+    dispatcher.setMaxRequests(poolSize);
     OkHttpClient client =
         new OkHttpClient()
             .newBuilder()
@@ -58,10 +58,6 @@ public class HttpUtil {
       throw new RuntimeException(e);
     }
     return httpClientUtil;
-  }
-
-  public static HttpUtil newInstance(String url, String authToken) {
-    return newInstance(url, authToken, Runtime.getRuntime().availableProcessors(), 3, 100);
   }
 
   private static boolean is2xx(int code) {
