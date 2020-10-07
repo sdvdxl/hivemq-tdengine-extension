@@ -7,17 +7,11 @@
 - [x] 支持配置存储的payload的编码（原始字符串、base64字符串、HEX 字符串，可以扩展）
 - [x] 支持自定义数据库名字和表名字，并且自动创建库和表
 - [x] 支持hivemq热加载、停止
-- [x] 支持同时启用http和jdbc方式写入不同的表并且配置不同编码或者其中之一
+- [x] 支持同时启用http和jdbc方式写入不同的表
 - [x] 支持异步入库
 - [x] 支持自定义入库队列大小，线程大小
-- [ ] 支持批量入库
-- [ ] 支持超级表/单表
-- [ ] 支持超级表表名策略（topic、client_id、username）
+- [x] 支持超级表，表名策略（client_id、username）
 
-
-阿里云 使用 username 定位一个设备 https://help.aliyun.com/document_detail/73742.html?spm=a2c4g.11186623.6.599.5c131424m9mbpK#title-s5l-k39-qti
-
-腾讯云使用clientid定位一个设备 https://cloud.tencent.com/document/product/634/32546#mqtt-.E5.8D.8F.E8.AE.AE.E8.AF.B4.E6.98.8E
 ## 支持版本
 
 - HiveMQ v4
@@ -39,6 +33,53 @@
 1. 解压该文件，拷贝 文件 `config-example.yml` 并重命名为 `config.yml`，根据需要选择要是用的连接TDengine的方式（http或者JDBC），并根据MQTT实际传输编码选择编码（RAW、BASE64或者HEX），修改并配置相应的数据库地址等信息
 1. 将该文件夹拷到到 HiveMQ安装目录的 `extensions` 目录，正常的情况下应该看到HiveMQ的日志中有输出 `Extension "TD Engine Data Transfer" version 1.0.0 started successfully.` ，说明启动成功
 1. 如果要停止插件运行，在该插件文件夹创建一个名字为 `DISABLED` 的空文件即可；如果需要启用插件，删除 `DISABLED` 文件夹即可
+
+## 配置
+
+配置文件为 `config.yml`，基本格式：
+
+```yaml
+# 消息存储线程池配置
+threadPool:
+  core: 4
+  max: 64
+  queue: 5000
+# mode: JDBC, HTTP
+# JDBC 使用 jdbc 方式写入，暂时仅支持Linux和Windows（依赖于官方JAVA driver）需要注意使用的本地库文件版本，url填写 "jdbc:TAOS://host:6030/"
+# HTTP 使用 http 方式写入，跨平台，url 填写 http://host:6041/rest/sql
+mode: JDBC
+url: "jdbc:TAOS://localhost:6030/"
+# 用户名
+username: root
+# 密码
+password: taosdata
+# 数据库
+database: mqtt
+# 表信息
+table:
+  # 超级表名字
+  name: 'mqtt_payload'
+  # if table mode is SUPER_TABLE, tableNameMode is required
+  # The available modes are: USERNAME, CLIENT_ID
+  # USERNAME 使用username作为表名
+  # CLIENT_ID 使用 client_id 作为表名
+  use: USERNAME
+  # 表名格式化方式
+  # FIXED 替换所使用的username或者client_id中非字母或者数字为'_'
+  # MD5 将 username或者client_id md5后作为表名
+  # 注意最终表名是 超级表名字+'_'+格式化表名
+  format: FIXED
+
+# mqtt 消息体存储编码
+# RAW 直接toString
+# BASE64 base64 编码
+# HEX hex 编码
+payloadCoder: BASE64
+# 最大连接/读取超时时间（毫秒）
+timeout: 10000
+# 连接池最大连接数
+maxConnections: 10
+```
 
 ## 架构
 
@@ -79,8 +120,6 @@ Maximum latency[ms]: 2847
 Average latency[ms]: 1612.60
 ```
 
-**全部有效写入库中。**
-
 #### 20个publisher，每个500个消息，一共10000个消息
 
 `bin/mqttloader -b tcp://127.0.0.1:1883 -p 20 -m 500`
@@ -103,8 +142,6 @@ Per second throughput[msg/s]: 111, 1750, 2145, 2259, 2498, 1156, 48, 0, 33
 Maximum latency[ms]: 7136
 Average latency[ms]: 2811.72
 ```
-
-有效写入库中： 8867 条。
 
 ### REST
 
@@ -131,8 +168,6 @@ Maximum latency[ms]: 1767
 Average latency[ms]: 611.88
 ```
 
-有效写入库中： 1262 条。
-
 #### 20个publisher，每个500个消息，一共10000个消息
 
 ```
@@ -154,13 +189,9 @@ Maximum latency[ms]: 4676
 Average latency[ms]: 1900.11
 ```
 
-有效写入库中： 5981 条。
-
-有效入库：成功执行插入操作，没有抛出异常。没有写入库中是因为写入速率达不到，线程拒绝执行导致。
-
-**增加优化线程数量和队列大小会提升性能，即有效写入数量**
+**增加优化线程数量和队列大小会提升性能**
 
 ## 注意事项
 
 1. jdbc方式不支持hivemq 重新热加载插件（动态库重复问题），如果启用了jdbc方式并且更改了配置或者插件版本，需要重启hivemq server
-1. 本插件是一个通用处理方案，所以使用了一张表来存储数据。因为 TDengine 设计的是时间戳一样，就会丢失后面的时间戳一样的消息，所以该插件使用的时候需要按照自己的mqtt的clientId 或者username 重新改造一下，尽量做到每个设备一个表。
+1. 用户更具需要确定表名使用username还是client_id，因为每个平台的设计不一样，比如 [腾讯云](https://cloud.tencent.com/document/product/634/32546#mqtt-.E5.8D.8F.E8.AE.AE.E8.AF.B4.E6.98.8E) 每个设备使用固定client_id，所以应该使用 use应该使用CLIENT_ID; [阿里云](https://help.aliyun.com/document_detail/73742.html?spm=a2c4g.11186623.6.599.5c131424m9mbpK#title-s5l-k39-qti) 每个设备的username是固定的，应该使用USERNAME。

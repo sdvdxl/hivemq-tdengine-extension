@@ -17,7 +17,6 @@ table:
   # MD5 hash to md5
   format: FIXED
 
-
 # RAW origin ; BASE64 base64 encoded; HEX hex;
 payloadCoder: BASE64
 # maximum wait milliseconds for connection (connect/read) timeout
