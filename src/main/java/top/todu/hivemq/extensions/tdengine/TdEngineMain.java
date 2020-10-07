@@ -38,8 +38,8 @@ import top.todu.hivemq.extensions.tdengine.util.ConfigUtil;
 public class TdEngineMain implements ExtensionMain {
 
   private static final @NotNull Logger log = LoggerFactory.getLogger(TdEngineMain.class);
-  private volatile TdEngineConfig config;
-  private volatile MqttPayloadService mqttPayloadService;
+  private TdEngineConfig config;
+  private MqttPayloadService mqttPayloadService;
 
   @Override
   public void extensionStart(

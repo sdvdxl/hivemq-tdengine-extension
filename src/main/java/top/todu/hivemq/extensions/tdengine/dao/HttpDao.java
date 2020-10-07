@@ -1,5 +1,6 @@
 package top.todu.hivemq.extensions.tdengine.dao;
 
+import static top.todu.hivemq.extensions.tdengine.dao.JdbcDao.SQL_CREATE_SUPER_TABLE;
 import static top.todu.hivemq.extensions.tdengine.util.SqlUtil.buildInsertSql;
 
 import coder.PayloadCoder;
@@ -61,27 +62,37 @@ public class HttpDao implements TdEngineDao {
 
   private void createTable() {
     boolean success =
-        httpUtil.post(String.format(SQL_CREATE_TABLE, config.getDatabase(), config.getTable()));
+        httpUtil.post(
+            String.format(
+                SQL_CREATE_SUPER_TABLE, config.getDatabase(), config.getTable().getName()));
     if (success) {
-      log.info("rest created table: {}.{}", config.getDatabase(), config.getTable());
+      log.info("rest created table: {}.{}", config.getDatabase(), config.getTable().getName());
     }
   }
 
   @Override
   public void save(
-      String clientId, String username, String topic, int qos, String ip, long timestamp,
+      String clientId,
+      String username,
+      String topic,
+      int qos,
+      String ip,
+      long timestamp,
       byte[] payload) {
     String sql =
         buildInsertSql(
             config.getDatabase(),
-            config.getTable(),
+            config.getTable().getName(),
+            username,
+            config.getTable().getFormat(),
+            config.getTable().getUse(),
             clientId,
             topic,
             qos,
             ip,
             timestamp,
             payload,
-            config.getPayloadCoder());
+            payloadCoder);
     if (log.isDebugEnabled()) {
       log.debug("rest build sql:{}", sql);
     }

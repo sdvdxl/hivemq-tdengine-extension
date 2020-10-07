@@ -26,6 +26,7 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import top.todu.hivemq.extensions.tdengine.service.MqttPayloadService;
+import top.todu.hivemq.extensions.tdengine.util.MqttSession;
 
 /**
  * @author sdvdxl
@@ -39,7 +40,6 @@ public class TdEngineMessageInBoundInterceptor implements PublishInboundIntercep
   private final MqttPayloadService mqttPayloadService;
 
   public TdEngineMessageInBoundInterceptor(MqttPayloadService mqttPayloadService) {
-
     this.mqttPayloadService = mqttPayloadService;
   }
 
@@ -62,12 +62,14 @@ public class TdEngineMessageInBoundInterceptor implements PublishInboundIntercep
       ByteBuffer payload = optionalByteBuffer.get();
       byte[] buf = new byte[payload.limit()];
       payload.get(buf);
+      String clientId = publishInboundInput.getClientInformation().getClientId();
+      String username = MqttSession.get(clientId);
       mqttPayloadService.save(
-          publishInboundInput.getClientInformation().getClientId(),
-          null,
+          clientId,
+          username,
           publishPacket.getTopic(),
           publishPacket.getQos(),
-          publishInboundInput.getConnectionInformation().getInetAddress().orElseGet(null),
+          publishInboundInput.getConnectionInformation().getInetAddress().orElse(null),
           publishPacket.getTimestamp(),
           buf);
     }

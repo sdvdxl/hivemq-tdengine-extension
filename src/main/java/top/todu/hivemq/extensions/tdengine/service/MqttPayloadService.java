@@ -6,12 +6,15 @@ import java.net.InetAddress;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import top.todu.hivemq.extensions.tdengine.config.TdEngineConfig;
+import top.todu.hivemq.extensions.tdengine.config.TdEngineConfig.TableNameUseType;
 import top.todu.hivemq.extensions.tdengine.dao.HttpDao;
 import top.todu.hivemq.extensions.tdengine.dao.JdbcDao;
 import top.todu.hivemq.extensions.tdengine.dao.TdEngineDao;
+import top.todu.hivemq.extensions.tdengine.util.MqttSession;
 import top.todu.hivemq.extensions.tdengine.util.ThreadPoolUtil;
 
 /**
@@ -24,8 +27,10 @@ public class MqttPayloadService {
   private static final Logger log = LoggerFactory.getLogger(MqttPayloadService.class);
   private final ThreadPoolExecutor threadPoolExecutor;
   private final TdEngineDao tdEngineDao;
+  private final TdEngineConfig config;
 
   public MqttPayloadService(TdEngineConfig config) {
+    this.config = config;
     threadPoolExecutor =
         new ThreadPoolUtil.Builder()
             .setCore(config.getThreadPool().getCore())
@@ -50,14 +55,15 @@ public class MqttPayloadService {
 
     switch (config.getMode()) {
       case HTTP:
-        tdEngineDao = new JdbcDao(config);
+        tdEngineDao = new HttpDao(config);
         break;
       case JDBC:
-        tdEngineDao = new HttpDao(config);
+        tdEngineDao = new JdbcDao(config);
         break;
       default:
         throw new IllegalStateException("Unexpected value: " + config.getMode());
     }
+    tdEngineDao.init();
   }
 
   public void close() {
@@ -66,8 +72,8 @@ public class MqttPayloadService {
     } catch (Exception e) {
       log.error(e.getMessage(), e);
     }
-
     ThreadPoolUtil.close();
+    MqttSession.cleanAll();
   }
 
   public void save(
@@ -90,6 +96,13 @@ public class MqttPayloadService {
       InetAddress inetAddress,
       long timestamp,
       byte[] payload) {
+    if (log.isDebugEnabled()
+        && config.getTable().getUse() == TableNameUseType.USERNAME
+        && StringUtils.isBlank(username)) {
+      username = "username_not_set";
+      log.debug("clientId :{} username not set, username will use:{}", clientId, username);
+    }
+
     tdEngineDao.save(
         clientId,
         username,

@@ -1,6 +1,8 @@
 package top.todu.hivemq.extensions.tdengine.config;
 
 import coder.PayloadCoder;
+import java.nio.charset.StandardCharsets;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -147,12 +149,28 @@ public class TdEngineConfig {
 
   public enum TableNameUseType {
     USERNAME,
-    CLIENT_ID
+    CLIENT_ID,
   }
 
   public enum TableNameFormat {
-    FIXED,
-    MD5
+    /** 替换非字母或者数字为_ */
+    FIXED {
+      @Override
+      public String format(String superTableName, String tableName) {
+        return superTableName + "_" + tableName.replaceAll("[^\\w]", "_");
+      }
+    },
+    /** 哈希成md5，防止特殊字符 */
+    MD5 {
+      @Override
+      public String format(String superTableName, String tableName) {
+        return superTableName
+            + "_"
+            + DigestUtils.md5Hex(tableName.getBytes(StandardCharsets.UTF_8));
+      }
+    };
+
+    public abstract String format(String superTableName, String tableName);
   }
 
   public static class ConnectPool {
@@ -199,7 +217,6 @@ public class TdEngineConfig {
 
   public static class TableInfo {
     private String name;
-    private TableMode mode;
     private TableNameUseType use;
     private TableNameFormat format;
 
@@ -209,14 +226,6 @@ public class TdEngineConfig {
 
     public void setName(String name) {
       this.name = name;
-    }
-
-    public TableMode getMode() {
-      return mode;
-    }
-
-    public void setMode(TableMode mode) {
-      this.mode = mode;
     }
 
     public TableNameUseType getUse() {
@@ -237,17 +246,7 @@ public class TdEngineConfig {
 
     @Override
     public String toString() {
-      return "TableInfo{"
-          + "name='"
-          + name
-          + '\''
-          + ", mode="
-          + mode
-          + ", use="
-          + use
-          + ", format="
-          + format
-          + '}';
+      return "TableInfo{" + "name='" + name + "', use=" + use + ", format=" + format + '}';
     }
   }
 }
