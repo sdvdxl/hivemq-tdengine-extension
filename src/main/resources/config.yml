@@ -12,7 +12,7 @@ table:
   name: 'mqtt_payload'
   # if table mode is SUPER_TABLE, tableNameMode is required
   # The available modes are: USERNAME, CLIENT_ID
-  use: USERNAME
+  use: CLIENT_ID
   # FIXED replace none number or letter to '_'
   # MD5 hash to md5
   format: FIXED
