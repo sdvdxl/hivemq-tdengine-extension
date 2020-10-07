@@ -41,6 +41,9 @@ public class TdEngineConnectInboundInterceptor implements ConnectInboundIntercep
     ConnectPacket connectPacket = connectInboundInput.getConnectPacket();
     String username = connectPacket.getUserName().orElse("");
     String clientId = connectPacket.getClientId();
+    if (log.isDebugEnabled()) {
+      log.debug("connect,clientId:{}, username:{}", clientId, username);
+    }
     MqttSession.set(clientId, username);
   }
 }

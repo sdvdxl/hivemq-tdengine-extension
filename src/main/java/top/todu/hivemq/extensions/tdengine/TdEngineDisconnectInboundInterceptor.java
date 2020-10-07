@@ -20,7 +20,6 @@ import com.hivemq.extension.sdk.api.annotations.NotNull;
 import com.hivemq.extension.sdk.api.interceptor.disconnect.DisconnectInboundInterceptor;
 import com.hivemq.extension.sdk.api.interceptor.disconnect.parameter.DisconnectInboundInput;
 import com.hivemq.extension.sdk.api.interceptor.disconnect.parameter.DisconnectInboundOutput;
-import com.hivemq.extension.sdk.api.packets.disconnect.DisconnectPacket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import top.todu.hivemq.extensions.tdengine.util.MqttSession;
@@ -38,8 +37,10 @@ public class TdEngineDisconnectInboundInterceptor implements DisconnectInboundIn
   public void onInboundDisconnect(
       @NotNull DisconnectInboundInput disconnectInboundInput,
       @NotNull DisconnectInboundOutput disconnectInboundOutput) {
-    DisconnectPacket disconnectPacket = disconnectInboundInput.getDisconnectPacket();
     String clientId = disconnectInboundInput.getClientInformation().getClientId();
+    if (log.isDebugEnabled()) {
+      log.debug("disconnect,clientId:{}", clientId);
+    }
     MqttSession.clean(clientId);
   }
 }

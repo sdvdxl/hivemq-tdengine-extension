@@ -84,9 +84,22 @@ public class TdEngineMain implements ExtensionMain {
 
     final TdEngineMessageInBoundInterceptor tdEngineMessageInBoundInterceptor =
         new TdEngineMessageInBoundInterceptor(mqttPayloadService);
+    final TdEngineDisconnectInboundInterceptor disconnectInboundInterceptor =
+        new TdEngineDisconnectInboundInterceptor();
+
+    final TdEngineConnectInboundInterceptor connectInboundInterceptor =
+        new TdEngineConnectInboundInterceptor();
+
+    final TdEngineConnectDisconnectEventListener disconnectEventListener =
+        new TdEngineConnectDisconnectEventListener();
+    Services.interceptorRegistry()
+        .setConnectInboundInterceptorProvider(in -> connectInboundInterceptor);
+    Services.eventRegistry().setClientLifecycleEventListener(in -> disconnectEventListener);
 
     initializerRegistry.setClientInitializer(
-        (initializerInput, clientContext) ->
-            clientContext.addPublishInboundInterceptor(tdEngineMessageInBoundInterceptor));
+        (initializerInput, clientContext) -> {
+          clientContext.addPublishInboundInterceptor(tdEngineMessageInBoundInterceptor);
+          clientContext.addDisconnectInboundInterceptor(disconnectInboundInterceptor);
+        });
   }
 }
