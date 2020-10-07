@@ -81,6 +81,20 @@ timeout: 10000
 maxConnections: 10
 ```
 
+## 表结构
+
+```
+taos> describe mqtt_payload ;
+             Field              |        Type        |   Length    |    Note    |
+=================================================================================
+ ts                             | TIMESTAMP          |           8 |            |
+ payload                        | NCHAR              |        1024 |            |
+ client_id                      | NCHAR              |        1024 | TAG        |
+ topic                          | NCHAR              |        1024 | TAG        |
+ qos                            | TINYINT            |           1 | TAG        |
+ ip                             | NCHAR              |         512 | TAG        |
+```
+
 ## 架构
 
 ### 整体架构图 
