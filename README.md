@@ -1,87 +1,88 @@
 # HiveMQ 4 TDengine Extension
 
-## 功能
-  
-- [x] 支持使用jdbc方式将 mqtt 消息写入 TDengine
-- [x] 支持使用http RESTful 方式将 mqtt 消息写入 TDengine
-- [x] 支持配置存储的payload的编码（原始字符串、base64字符串、HEX 字符串，可以扩展）
-- [x] 支持自定义数据库名字和表名字，并且自动创建库和表
-- [x] 支持hivemq热加载、停止
-- [x] 支持同时启用http和jdbc方式写入不同的表
-- [x] 支持异步入库
-- [x] 支持自定义入库队列大小，线程大小
-- [x] 支持超级表，表名策略（client_id、username）
+[中文说明](README_zh.md)
 
-## 支持版本
+## Function
+  
+- [x] Support TDengine jdbc
+- [x] Support TDengine http
+- [x] Support the encoding of the payload stored in the configuration (original string, base64 string, HEX string, can be extended)
+- [x] Support custom database name and table name, and automatically create database and table
+- [x] Support extension hot load and stop
+- [x] Support asynchronous storage, does not affect the original mqtt message processing
+- [x] Support custom queue size and thread size
+- [x] Support super table, table name strategy (client_id, username)
+
+## Support version
 
 - HiveMQ v4
 - TDengine 2.0
 
-本插件当前测试版本：
+The current test version of this extension:
 
 - HiveMQ 4.4.1
 - TDengine Server 2.0.4.0
-- TDengine JDBC 驱动 2.0.7
+- TDengine JDBC driver 2.0.7
 
-## 使用说明
+## Instructions for use
 
-1. 本插件依赖JDK版本11+，最低11（HiveMQ依赖），国内可以[从这里下载](https://www.injdk.cn/)
-1. 本插件依赖Maven，国内可以[从这里下载](https://mirrors.huaweicloud.com/apache/maven/maven-3/3.6.3/binaries/)
-1. [HiveMQ安装并启动](https://www.hivemq.com/docs/hivemq/4.3/user-guide/install-hivemq.html)，支持Linux，Mac、Windows和Docker
-1. [TDengine安装并启动](https://www.taosdata.com/cn/getting-started/)，支持Linux、Windows和Docker，推荐Linux或者Linux Docker版本 
-1. 进入项目根目录，执行 `mvn package -Dmaven.test.skip=true`，当看到 `BUILD SUCCESS`，说明编译并打包成功， 在其上面会打印出打包的文件目录 `Building zip:xxx`
-1. 解压该文件，拷贝 文件 `config-example.yml` 并重命名为 `config.yml`，根据需要选择要是用的连接TDengine的方式（http或者JDBC），并根据MQTT实际传输编码选择编码（RAW、BASE64或者HEX），修改并配置相应的数据库地址等信息
-1. 将该文件夹拷到到 HiveMQ安装目录的 `extensions` 目录，正常的情况下应该看到HiveMQ的日志中有输出 `Extension "TD Engine Data Transfer" version 1.0.0 started successfully.` ，说明启动成功
-1. 如果要停止插件运行，在该插件文件夹创建一个名字为 `DISABLED` 的空文件即可；如果需要启用插件，删除 `DISABLED` 文件夹即可
+1. This extension depends on JDK version 11+, minimum 11 (HiveMQ dependency)
+1. This extension depends on Maven
+1. [HiveMQ install and start](https://www.hivemq.com/docs/hivemq/4.3/user-guide/install-hivemq.html) , support Linux, Mac, Windows and Docker
+1. [TDengine install and start](https://www.taosdata.com/cn/getting-started/) , support Linux, Windows and Docker, recommend Linux or Linux Docker version
+1. Enter the project root directory, execute `mvn package -Dmaven.test.skip=true`, when you see `BUILD SUCCESS`, it means that the compilation and packaging is successful, and the packaged file directory `Building zip:xxx' will be printed on it `
+1. Unzip the file, copy the file `config-example.yml` and rename it to `config.yml`, select the way to connect to TDengine (http or JDBC) according to your needs, and select the encoding according to the actual MQTT transfer encoding (RAW , BASE64 or HEX), modify and configure the corresponding database address and other information
+1. Copy the folder to the ʻextensions` directory of the HiveMQ installation directory. Under normal circumstances, you should see the output ʻExtension "TD Engine Data Transfer" version 1.0.0 started successfully.` in the HiveMQ log, indicating the startup success
+1. If you want to stop the plugin, create an empty file named `DISABLED` in the plugin folder; if you need to enable the plugin, delete the `DISABLED` folder
 
-## 配置
+## Configuration
 
-配置文件为 `config.yml`，基本格式：
+The configuration file is `config.yml`, the basic format:
 
 ```yaml
-# 消息存储线程池配置
+# Message storage thread pool configuration
 threadPool:
   core: 4
   max: 64
   queue: 5000
 # mode: JDBC, HTTP
-# JDBC 使用 jdbc 方式写入，暂时仅支持Linux和Windows（依赖于官方JAVA driver）需要注意使用的本地库文件版本，url填写 "jdbc:TAOS://host:6030/"
-# HTTP 使用 http 方式写入，跨平台，url 填写 http://host:6041/rest/sql
+# JDBC uses jdbc to write, temporarily only supports Linux and Windows (depending on the official JAVA driver), you need to pay attention to the local library file version used, fill in "jdbc:TAOS://host:6030/" in the url
+# HTTP Use http to write, cross-platform, fill in url http://host:6041/rest/sql
 mode: JDBC
 url: "jdbc:TAOS://localhost:6030/"
-# 用户名
+# username
 username: root
-# 密码
+# Password
 password: taosdata
-# 数据库
+# Database
 database: mqtt
-# 表信息
+# Table information
 table:
-  # 超级表名字
-  name: 'mqtt_payload'
+  # Super table name
+  name:'mqtt_payload'
   # if table mode is SUPER_TABLE, tableNameMode is required
   # The available modes are: USERNAME, CLIENT_ID
-  # USERNAME 使用username作为表名
-  # CLIENT_ID 使用 client_id 作为表名
+  # USERNAME use username as the table name
+  # CLIENT_ID use client_id as the table name
   use: USERNAME
-  # 表名格式化方式
-  # FIXED 替换所使用的username或者client_id中非字母或者数字为'_'
-  # MD5 将 username或者client_id md5后作为表名
-  # 注意最终表名是 超级表名字+'_'+格式化表名
+  # Table name formatting
+  # FIXED Replace non-letters or numbers in username or client_id with'_'
+  # MD5 uses username or client_id md5 as the table name
+  # Note that the final table name is super table name +'_' + formatted table name
   format: FIXED
 
-# mqtt 消息体存储编码
-# RAW 直接toString
-# BASE64 base64 编码
-# HEX hex 编码
+# mqtt Message body storage code
+# RAW directly toString
+# BASE64 base64 encoding
+# HEX hex code
 payloadCoder: BASE64
-# 最大连接/读取超时时间（毫秒）
+# Maximum connection/read timeout time (milliseconds)
 timeout: 10000
-# 连接池最大连接数
+# Maximum number of connections in the connection pool
 maxConnections: 10
 ```
 
-## 表结构
+## Table Structure
 
 ```
 taos> describe mqtt_payload ;
@@ -95,23 +96,24 @@ taos> describe mqtt_payload ;
  ip                             | NCHAR              |         512 | TAG        |
 ```
 
-## 架构
+## Architecture
 
-### 整体架构图 
+### Overall architecture diagram
 
-![架构图](https://public-links.todu.top/hivemq-tdengine-extension.jpg?imageMogr2/thumbnail/!100p)
+![Architecture diagram](https://public-links.todu.top/1602317333.png?imageMogr2/thumbnail/!100p)
 
-### 时序图
+### Sequence diagram
 
-![时序图](https://public-links.todu.top/hivemq-tdengine-extension-seq.jpg?imageMogr2/thumbnail/!100p)
+![Sequence diagram](https://public-links.todu.top/1602317262.png?imageMogr2/thumbnail/!100p)
+)
 
-## 测试
+## Testing
 
-**2核4G；存储核心现程4，最大16，队列1000。**
+**2 cores 4G; storage core 4, maximum 16, queue 1000.**
 
 ### JDBC
 
-#### 20个publisher，每个100个消息，一共2000个消息
+#### 20 publishers, each with 100 messages, a total of 2000 messages
 
 `bin/mqttloader -b tcp://127.0.0.1:1883 -p 20 -m 100`
 
@@ -134,7 +136,7 @@ Maximum latency[ms]: 2847
 Average latency[ms]: 1612.60
 ```
 
-#### 20个publisher，每个500个消息，一共10000个消息
+#### 20 publishers, each with 500 messages, a total of 10,000 messages
 
 `bin/mqttloader -b tcp://127.0.0.1:1883 -p 20 -m 500`
 
@@ -157,9 +159,9 @@ Maximum latency[ms]: 7136
 Average latency[ms]: 2811.72
 ```
 
-### REST
+### HTTP
 
-#### 20个publisher，每个100个消息，一共2000个消息
+#### 20 publishers, each with 100 messages, a total of 2000 messages
 
 `bin/mqttloader -b tcp://127.0.0.1:1883 -p 20 -m 100`
 
@@ -182,7 +184,7 @@ Maximum latency[ms]: 1767
 Average latency[ms]: 611.88
 ```
 
-#### 20个publisher，每个500个消息，一共10000个消息
+#### 20 publishers, each with 500 messages, a total of 10,000 messages
 
 ```
 Measurement started: 2020-10-02 14:17:27.436 CST
@@ -203,9 +205,9 @@ Maximum latency[ms]: 4676
 Average latency[ms]: 1900.11
 ```
 
-**增加优化线程数量和队列大小会提升性能**
+**Increasing the number of optimized threads and queue size will improve performance**
 
-## 注意事项
+## Precautions
 
-1. jdbc方式不支持hivemq 重新热加载插件（动态库重复问题），如果启用了jdbc方式并且更改了配置或者插件版本，需要重启hivemq server
-1. 用户更具需要确定表名使用username还是client_id，因为每个平台的设计不一样，比如 [腾讯云](https://cloud.tencent.com/document/product/634/32546#mqtt-.E5.8D.8F.E8.AE.AE.E8.AF.B4.E6.98.8E) 每个设备使用固定client_id，所以应该使用 use应该使用CLIENT_ID; [阿里云](https://help.aliyun.com/document_detail/73742.html?spm=a2c4g.11186623.6.599.5c131424m9mbpK#title-s5l-k39-qti) 每个设备的username是固定的，应该使用USERNAME。
+1. The jdbc mode does not support hivemq to reload the plug-in (duplication of dynamic library). If the jdbc mode is enabled and the configuration or plug-in version is changed, the hivemq server needs to be restarted
+1. Users need to determine whether to use username or client_id for the table name, because the design of each platform is different, such as [Tencent Cloud](https://cloud.tencent.com/document/product/634/32546#mqtt-.E5.8D.8F.E8.AE.AE.E8.AF.B4.E6.98.8E) Each device uses a fixed client_id, so you should use CLIENT_ID; [Aliyun](https://help.aliyun.com/document_detail/73742.html?spm=a2c4g.11186623.6.599.5c131424m9mbpK#title-s5l-k39-qti) The username of each device is fixed, so USERNAME should be used.
