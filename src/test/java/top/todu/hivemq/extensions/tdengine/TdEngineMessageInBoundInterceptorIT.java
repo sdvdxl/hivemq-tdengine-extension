@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2018-present HiveMQ GmbH
  *
@@ -29,40 +28,56 @@ import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
+import top.todu.hivemq.extensions.tdengine.config.TdEngineConfig.TableNameFormat;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * This tests the functionality of the {@link TdEngineMessageInBoundInterceptor}.
- * It uses the HiveMQ Testcontainer to automatically package and deploy this extension inside a HiveMQ docker container.
+ * This tests the functionality of the {@link TdEngineMessageInBoundInterceptor}. It uses the HiveMQ
+ * Testcontainer to automatically package and deploy this extension inside a HiveMQ docker
+ * container.
  *
  * @author Yannick Weber
  * @since 4.3.1
  */
 class TdEngineMessageInBoundInterceptorIT {
+  public static void main(String[] args) {
+    System.out.println(TableNameFormat.FIXED.format("super", "a-b"));
 
-    @RegisterExtension
-    public final @NotNull HiveMQTestContainerExtension extension =
-            new HiveMQTestContainerExtension()
-                    .withExtension(MavenHiveMQExtensionSupplier.direct().get());
+  }
 
-    @Test
-    @Timeout(value = 5, unit = TimeUnit.MINUTES)
-    void test_payload_modified() throws InterruptedException {
-        final Mqtt5BlockingClient client = Mqtt5Client.builder()
-                .identifier("hello-world-client")
-                .serverPort(extension.getMqttPort())
-                .buildBlocking();
-        client.connect();
+  @Test
+  public void testEscape() {
+    System.out.println(TableNameFormat.FIXED.format("super", "a-b"));
+  }
 
-        final Mqtt5BlockingClient.Mqtt5Publishes publishes = client.publishes(MqttGlobalPublishFilter.ALL);
-        client.subscribeWith().topicFilter("hello/world").send();
+  @RegisterExtension
+  public final @NotNull HiveMQTestContainerExtension extension =
+      new HiveMQTestContainerExtension().withExtension(MavenHiveMQExtensionSupplier.direct().get());
 
-        client.publishWith().topic("hello/world").payload("Good Bye World!".getBytes(StandardCharsets.UTF_8)).send();
+  @Test
+  @Timeout(value = 5, unit = TimeUnit.MINUTES)
+  void test_payload_modified() throws InterruptedException {
+    final Mqtt5BlockingClient client =
+        Mqtt5Client.builder()
+            .identifier("hello-world-client")
+            .serverPort(extension.getMqttPort())
+            .buildBlocking();
+    client.connect();
 
-        final Mqtt5Publish receive = publishes.receive();
-        assertTrue(receive.getPayload().isPresent());
-        assertEquals("Hello World!", new String(receive.getPayloadAsBytes(), StandardCharsets.UTF_8));
-    }
+    final Mqtt5BlockingClient.Mqtt5Publishes publishes =
+        client.publishes(MqttGlobalPublishFilter.ALL);
+    client.subscribeWith().topicFilter("hello/world").send();
+
+    client
+        .publishWith()
+        .topic("hello/world")
+        .payload("Good Bye World!".getBytes(StandardCharsets.UTF_8))
+        .send();
+
+    final Mqtt5Publish receive = publishes.receive();
+    assertTrue(receive.getPayload().isPresent());
+    assertEquals("Hello World!", new String(receive.getPayloadAsBytes(), StandardCharsets.UTF_8));
+  }
 }

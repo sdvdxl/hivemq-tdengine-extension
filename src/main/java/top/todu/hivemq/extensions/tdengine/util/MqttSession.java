@@ -1,6 +1,7 @@
 package top.todu.hivemq.extensions.tdengine.util;
 
 import java.util.concurrent.ConcurrentHashMap;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * <br>
@@ -14,7 +15,7 @@ public class MqttSession {
   private static final ConcurrentHashMap<String, String> CLIENT_MAP = new ConcurrentHashMap<>();
 
   public static void set(String clientId, String username) {
-    CLIENT_MAP.put(clientId, username);
+    CLIENT_MAP.put(clientId, StringUtils.defaultString(username, "default_user"));
   }
 
   public static String get(String clientId) {

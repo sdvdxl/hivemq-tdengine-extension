@@ -5,6 +5,8 @@ import static com.fasterxml.jackson.databind.util.StdDateFormat.DATE_FORMAT_STR_
 import coder.PayloadCoder;
 import java.util.TimeZone;
 import org.apache.commons.lang3.time.FastDateFormat;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import top.todu.hivemq.extensions.tdengine.config.TdEngineConfig.TableNameFormat;
 import top.todu.hivemq.extensions.tdengine.config.TdEngineConfig.TableNameUseType;
 
@@ -15,6 +17,7 @@ import top.todu.hivemq.extensions.tdengine.config.TdEngineConfig.TableNameUseTyp
  * @date 2020/9/30 20:43 <br>
  */
 public class SqlUtil {
+  private static final Logger log = LoggerFactory.getLogger(SqlUtil.class);
   private static final FastDateFormat DATE_FORMAT =
       FastDateFormat.getInstance(DATE_FORMAT_STR_ISO8601, TimeZone.getTimeZone("GMT+8"));
 
@@ -66,6 +69,10 @@ public class SqlUtil {
             .append("', '")
             .append(payloadCoder == PayloadCoder.RAW ? escape(encodedPayload) : encodedPayload)
             .append("');");
-    return sqlBuilder.toString();
+    String sql = sqlBuilder.toString();
+    if (log.isDebugEnabled()) {
+      log.debug("gen insert sql: {}", sql);
+    }
+    return sql;
   }
 }
